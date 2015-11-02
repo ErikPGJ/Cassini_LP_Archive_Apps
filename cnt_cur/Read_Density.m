@@ -72,6 +72,9 @@ if length(end_time) > 1
 end
 
 start_ind   = find( start_time < toepoch(CA.CONTENTS) );
+if isempty(start_ind)
+    error('Can not find any ISDAT data for the requested time interval.')
+end
 start_entry = start_ind(1);
 
 end_ind     = find( end_time < toepoch(CA.CONTENTS) );

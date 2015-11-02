@@ -4,7 +4,11 @@
 % NOTE: MATLAB script for practical purposes (?, debugging?), but could just as well be a function.
 %       Not called from anywhere.
 %
-clear all
+
+% Do not want to use "clear all" since it clears breakpoints in OTHER
+% FILES (or at least Read_Density.m), but NOT IN THIS FILE.
+clear VARIABLES    
+
 Constants; % Some constants
 global datapath apppath
 datapath = '../../Cassini_LP_DATA_Archive/';
@@ -32,7 +36,8 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     disp('Cassini/RPWS/LP data archiver');
     disp('Enter start and end dates for data you wish to archive');
     disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
-    disp('NOTE: if error, check if date interval begins OR ends when there is no data');
+    disp('NOTE: Time interval INCLUDES start date, but EXCLUDES end date.')
+    disp('NOTE: if error, check if date interval begins OR ends when there is no data.');
     t_start = input('Start date: ');
     t_end = input('End date: ');
     nodata_log = [];
