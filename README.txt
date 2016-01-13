@@ -4,11 +4,11 @@
 % README.txt
 %   - this file
 %
-% readme_LP_cntcurr_archi.txt
+% README_LP_cntcurr_archi.txt
 %   - more detailed description of the continuous current density part
 %   apart from the description, contains a list of gaps in DBH cont. current density data
 %
-% readme_LP_sweep_archi.txt
+% README_LP_sweep_archi.txt
 %   - more detailed description of the sweep part,
 %   apart from the description, contains a list of gaps in DBH sweep data
 %
