@@ -3,7 +3,7 @@
 The data is already calibrated.
 filename generator: LP_CntCur_YEARDOY.dat
 data format is: [YYYY MM DD hh mm ss bias current] all numbers are saved with 6 digits, SPACE delimiter
-units: [years    months  days    hours   minutes seconds volts   ampers]
+units: [years  months  days  hours  minutes  seconds  volts  ampers]
 Files are saved in the  Cassini_LP_DATA_Archive/
 (full path is printed out as the file is being written)
 UPDATE: the program now includes code for removing spikes in time, imported from Spike_Removal_Tool.m in then /cnt_cur/ directory

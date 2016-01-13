@@ -3,7 +3,7 @@
 The data is already calibrated.
 filename generator: LP_archive_YEARDOY.dat
 data format is: [YYYY MM DD hh mm ss U_bias current] all numbers are saved with 6 digits, SPACE delimiter
-units: [years    months  days    hours   minutes seconds volts   ampers]
+units: [years  months  days  hours  minutes  seconds  volts  amperes]
 Files are saved in the  Cassini_LP_DATA_Archive/LP_Swp_Clb/
 (full path is printed out as the file is being written)
 

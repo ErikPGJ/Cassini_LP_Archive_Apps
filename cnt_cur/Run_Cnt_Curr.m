@@ -39,7 +39,7 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     disp('NOTE: Time interval INCLUDES start date, but EXCLUDES end date.')
     disp('NOTE: if error, check if date interval begins OR ends when there is no data.');
     t_start = input('Start date: ');
-    t_end = input('End date: ');
+    t_end   = input('End date: ');
     nodata_log = [];
 	
     if ~isempty(t_start) % unless empty input
@@ -104,7 +104,6 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
         
         if(CA.DBH ~= 0) % If we are connected to ISDAT
             
-            
             [t_Ne U_DAC Ne_I] = Read_Density(CA,time, time+86400);
             
             if isempty(t_Ne)
@@ -124,10 +123,6 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
                 time = time + 86400; % on to the next day
                 continue;
             else % if there is data, save in a .dat
-                
-                
-                
-                
 
                 time_ymd = fromepoch(t_Ne(1)); % convert from epoch for the file name
                 % 86400 seconds in a day
