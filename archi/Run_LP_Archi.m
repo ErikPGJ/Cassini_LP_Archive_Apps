@@ -9,14 +9,14 @@
 %
 function Run_LP_Archi
 
-    start_time = []; end_time = [];
+    ESTIMATED_WALL_TIME_PER_DATA_TIME = 20/86400;   % Used for predicting (and displaying) the wall time used by the function.
+    
     disp('Cassini/RPWS/LP data archiver');
     disp('Enter start and end dates for data you wish to archive');
-    disp('NOTE: Dates are INCLUSIVE.');
     disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
     disp('NOTE: if error, check if date interval begins OR ends when there is no data');
-    start_time = input('Start date: ');
-    end_time   = input('End date:   ');
+    start_time = input('Start date (inclusive): ');
+    end_time   = input('End date   (exclusive): ');
 
     global datapath apppath
     datapath = '../../Cassini_LP_DATA_Archive/';
@@ -48,45 +48,21 @@ function Run_LP_Archi
     %     end_time = TBG(k,4:6);
     % %
     % % ------------------------------------
+    
+    
 
-    if ~isempty(start_time) % unless empty input
-        if length(start_time) == 2
-            start_time = [doy2date(start_time(1), start_time(2)) 0 0 0]; % set start_time as [yyyy mm dd 0h 0m 0s]
-        elseif length(start_time) == 3
-            start_time = [start_time 0 0 0]; % set start_time as [yyyy mm dd 0h 0m 0s]
-        else
-            disp('Only enter year, month and day... aborting.');
-            return;
-        end
-    else
-        disp('No start date input... aborting.');
-        return;
-    end
+    start_time = interpret_user_input_day(start_time);
+    end_time = interpret_user_input_day(end_time);
 
 
-
-
-
-    if ~isempty(end_time) % unless empty input
-        if length(end_time) == 2
-            end_time = [doy2date(end_time(1), end_time(2)) 0 0 0]; % set end_time as [yyyy mm dd 0h 0m 0s]
-        elseif length(end_time) == 3
-            end_time = [end_time 0 0 0]; % set end_time as [yyyy mm dd 0h 0m 0s]
-        else
-            disp('Only enter year, month and day. Aborting...');
-            return;
-        end
-    else
-        disp('No end date input... aborting');
-        return;
-    end
-
-
-    total_time = (toepoch(end_time) - toepoch(start_time))/86400;
-    ss = mod(total_time*20, 60);
-    mm = mod(total_time*20-ss, 3600)/60;
-    hh = floor(total_time*20/3600);
-    sprintf('%g days interval given.\nApproximate execution time: up to %d:%02d:%02d', total_time, hh, mm, ss)
+    total_time_s = toepoch(end_time) - toepoch(start_time);
+    % Estimated time (wall time) needed for generating data.
+    % NOTE: Relies on hardcoded conversion constant!
+    estimated_walltime_exec_s = (toepoch(end_time) - toepoch(start_time)) * ESTIMATED_WALL_TIME_PER_DATA_TIME;
+    ss = mod(estimated_walltime_exec_s, 60);
+    mm = mod(estimated_walltime_exec_s-ss, 3600)/60;
+    hh = floor(estimated_walltime_exec_s/3600);
+    sprintf('%g days interval given.\nEstimated execution time: up to %d:%02d:%02d', total_time_s/86400, hh, mm, ss)
     % yesno = input('Enter to continue, write anything to abort', 's');
     % if ~isempty(yesno)
     %     return;
@@ -118,62 +94,62 @@ function Run_LP_Archi
 
 
 
-    timevec = toepoch(start_time):86400:toepoch(end_time)'; % create an epoch vector with 1-day intervals
-    timevec = fromepoch(timevec');
-    time = intersect(CONTENTS(:,1:3), timevec(:,1:3), 'rows'); % find days existing in CONTENTS
-    [m n] = size(time);
-    time = [time zeros(m,n)];
-    clear n     % Seems unnecessary. Remove when sure that only function, and no scripts, are called after.
+    % Create a vector containing the beginning of every requested day.
+    % NOTE: Subtracts 86400 to exclude specified end day.
+    days_requested = toepoch(start_time):86400:(toepoch(end_time)-86400);  
+    days_requested = fromepoch(days_requested);
+    
+    time = intersect(CONTENTS(:,1:3), days_requested(:,1:3), 'rows'); % find days existing in CONTENTS
+    [N_days N_time_fields] = size(time);   % N_days = days with data, not number of requested days (I think).
+    time = [time zeros(N_days,N_time_fields)];
+    %clear N_time_fields     % Seems unnecessary. Remove when sure that only functions, and no scripts, are called afterwards.
 
-    data_log = time; % save available days
+    %data_log = time; % save available days
 
-    t_work_start = clock   % Start time keeping. Exclude time used for user interaction.
+    t_work_start = clock;   % Start time keeping. Exclude time used for user interaction.
 
     % time = toepoch(time); % converting to epoch for use in the loop
     nodata_log = [];
     %data_log = [];
-    for i = 1:m
+    for i = 1:N_days
         % run sweep reading function to calibrate and fix mismatches
-        time_s = time(i,:); % beginning of the day
-        time_e = fromepoch(toepoch(time(i,:)) + 86400); % end of the day (next day 00:00:00)
-        [t_sweep U_sweep I_sweep] = Read_Sweep([time_s; time_e], DBH, CONTENTS, DURATION);
+        t_day_begin = time(i,:); % beginning of the day
+        t_day_end = fromepoch(toepoch(time(i,:)) + 86400); % end of the day (next day 00:00:00)
+        [t_sweep, U_sweep, I_sweep] = Read_Sweep([t_day_begin; t_day_end], DBH, CONTENTS, DURATION);
         if ~isempty(t_sweep)
-            filename = [datapath, sprintf('LP_Swp_Clb/LP_archive_%4d%03d.dat', time_s(1), date2doy(time_s(1:3)))];
+            filename = [datapath, sprintf('LP_Swp_Clb/LP_archive_%4d%03d.dat', t_day_begin(1), date2doy(t_day_begin(1:3)))];
             %         if exist(filename, 'file') == 2
             %             % ovwrt = input('File exists, overwrite? (Enter = Yes/N = no) ');
             %             if 1 %~isempty(ovwrt)
-            %                 disp(['Not overwriting ' datestr(time_s, 'yyyy-mm-dd')]);
+            %                 disp(['Not overwriting ' datestr(t_day_begin, 'yyyy-mm-dd')]);
             %                 continue
             %             end
             %         end
             disp(['Writing file: ' filename ' ...']);
             fid4 = fopen(filename, 'w'); fprintf(fid4, '%4g %02g %02g %02g %02g %07.4f %+.5e %+.5e\n', [fromepoch(t_sweep) U_sweep I_sweep]'); fclose(fid4);
             %dlmwrite(filename, [fromepoch(t_sweep) U_sweep I_sweep], 'delimiter', '\t', 'precision', 6);
-            filesize = dir(filename);
-            filesize = filesize.bytes/1024/1024;
-            %data_log = [data_log; time_s];
-            disp(['Done. File size: ', num2str(filesize), ' MB']);
+            file_info = dir(filename);
+            file_size = file_info.bytes/(1024*1024);
+            %data_log = [data_log; t_day_begin];
+            disp(['Done. File size: ', num2str(file_size), ' MB']);
         else
-            disp(['No data from ' datestr(time_s, 'yyyy-mm-dd') ' skipping']);
-            nodata_log = [nodata_log; time_s];
+            disp(['No data from ' datestr(t_day_begin, 'yyyy-mm-dd') ' skipping']);
+            nodata_log = [nodata_log; t_day_begin];
             if exist([apppath, 'archi/nodata_log.dat'], 'file') == 2
                 nodata = load([apppath, 'archi/nodata_log.dat']);
                 % if file exists, check whether the data-free day is already on the list
-                if isempty(find(toepoch(time_s) == nodata, 1))
-                    fid3 = fopen([apppath, 'archi/nodata_log.dat'], 'a'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', time_s); fclose(fid3);
+                if isempty(find(toepoch(t_day_begin) == nodata, 1))
+                    fid3 = fopen([apppath, 'archi/nodata_log.dat'], 'a'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', t_day_begin); fclose(fid3);
                 end
             else
                 % if file does not exist, create
-                fid3 = fopen([apppath, 'archi/nodata_log.dat'], 'w'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', time_s); fclose(fid3);
+                fid3 = fopen([apppath, 'archi/nodata_log.dat'], 'w'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', t_day_begin); fclose(fid3);
             end
         end
         
-        
-    end
+    end % end % TBG loop
     
     t_work = etime(clock, t_work_start);
-    fprintf(1, 'Wall time use for generating files: %.0f s,  %.1f s/(day of data)\n', t_work, t_work/m);
-
-    % end % TBG loop
+    fprintf(1, 'Wall time use for generating files: %.0f s;  %.1f s/(day of data)\n', t_work, t_work/N_days);
 
 end

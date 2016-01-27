@@ -32,51 +32,21 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     % NEntries = length(CA.CONTENTS); % Number of entries in contents list
     disp('Process Cassini');
     
-    t_start = []; t_end = [];
     disp('Cassini/RPWS/LP data archiver');
     disp('Enter start and end dates for data you wish to archive');
     disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
-    disp('NOTE: Time interval INCLUDES start date, but EXCLUDES end date.')
     disp('NOTE: if error, check if date interval begins OR ends when there is no data.');
-    t_start = input('Start date: ');
-    t_end   = input('End date: ');
+    t_start = input('Start date (inclusive): ');
+    t_end   = input('End date   (exclusive): ');
     nodata_log = [];
-	
-    if ~isempty(t_start) % unless empty input
-        if length(t_start) == 2
-            t_start = [doy2date(t_start(1), t_start(2)) 0 0 0]; % set t_start as [yyyy mm dd 0h 0m 0s]
-        elseif length(t_start) == 3
-            t_start = [t_start 0 0 0]; % set t_start as [yyyy mm dd 0h 0m 0s]
-        else
-            disp('Only enter year, month and day... aborting.');
-            return;
-        end
-    else
-        disp('No start date input... aborting.');
-        return;
-    end
-    
-    
-    
-    
-    
-    if ~isempty(t_end) % unless empty input
-        if length(t_end) == 2
-            t_end = [doy2date(t_end(1), t_end(2)) 0 0 0]; % set t_end as [yyyy mm dd 0h 0m 0s]
-        elseif length(t_end) == 3
-            t_end = [t_end 0 0 0]; % set t_end as [yyyy mm dd 0h 0m 0s]
-        else
-            disp('Only enter year, month and day. Aborting...');
-            return;
-        end
-    else
-        disp('No end date input... aborting');
-        return;
-    end
+   
+    t_start = interpret_user_input_day(t_start);
+    t_end = interpret_user_input_day(t_end);
+    N_days = (toepoch(t_end) - toepoch(t_start)) / 86400;
 
-	
-    time = toepoch(t_start);
     
+	
+    time = toepoch(t_start);    
     if(CA.DBH==0) % Only reconnect if not connected
         CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % Connect to ISDAT
     end
@@ -99,8 +69,9 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
         end
     end
     
-    while time < toepoch(t_end) % time is increased by a day in the end
- 
+    t_work_start = clock;   % Start time keeping. Exclude time used for user interaction.
+    
+    while time < toepoch(t_end)   % Time is increased by one day at the end of the loop.
         
         if(CA.DBH ~= 0) % If we are connected to ISDAT
             
@@ -132,18 +103,18 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
                 %dlmwrite(filename, [fromepoch(t_Ne) U_DAC Ne_I], 'delimiter', '\t', 'precision', 6);
                 filesize = dir(filename);
                 filesize = filesize.bytes/1024/1024;
-                disp(['Done. File size: ', num2str(filesize), ' MB']);
+                disp(['Done. File size: ', num2str(filesize), ' MB']);                
                 
-                
-            end
-            
-            
-            
+            end            
             
         end
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        time = time + 86400; % on to the next day
+        time = time + 86400;   % Continue with next day
     end
+    
+    t_work = etime(clock, t_work_start);
+    fprintf(1, 'Wall time use for generating files: %.0f s;  %.1f s/(day of data)\n', t_work, t_work/N_days);
+    
 end
 

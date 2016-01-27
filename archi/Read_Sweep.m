@@ -1,4 +1,4 @@
-function [t,U,I] = Read_Sweep(time,DBH, CONTENTS, DURATION)
+function [t,U,I] = Read_Sweep(time, DBH, CONTENTS, DURATION)
 %Read_Sweep_mm reads bias and current data of CASSINI/RPWS/LP.
 %usage:
 % In easiest case, just run 'Read_Sweep'. The specific time intervals are
@@ -14,8 +14,11 @@ function [t,U,I] = Read_Sweep(time,DBH, CONTENTS, DURATION)
 % added algorithm to remove time spikes from data
 % FIX_DATA function replaced by intersect command
 % SweepMode function replaced with a simpler algorithm
-% (commented as there is no need to fix double plateu values, saving ALL data)
+% (commented as there is no need to fix double plateau values, saving ALL data)
 % Oleg Shebanits, IRFU/Uppsala, 2012-02-07.
+%
+% WARNING!!! Uses assignin('base', ...)
+% BUG(?): Can throw error for times without data.
 
 global datapath apppath
 
