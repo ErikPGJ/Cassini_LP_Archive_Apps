@@ -73,7 +73,7 @@
 %           extracts sweeps from DBH, removes negative spikes in time vectors of
 %           bias and current data (removed data is stored in "/archi/spikelog.mat",
 %           separate files for Ubias and current), calibrates and returns
-%           NOTE: does nothing with plateus, storing ALL good measurements
+%           NOTE: Does nothing with plateaus, storing ALL good measurements
 %           also handy for manually scanning specific dates to pin-point errors, gaps etc
 %
 % Cassini_LP_Archive_Apps/archi/SaveSw.m

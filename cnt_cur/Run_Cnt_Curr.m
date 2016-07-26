@@ -3,12 +3,15 @@
 %
 % NOTE: MATLAB script for practical purposes (?, debugging?), but could just as well be a function.
 %       Not called from anywhere.
-%
+% PROPOSAL: Rewrite as function.
 
 % Do not want to use "clear all" since it clears breakpoints in OTHER
 % FILES (or at least Read_Density.m), but NOT IN THIS FILE.
-clear VARIABLES    
+clear VARIABLES
 
+% Measured speed from generating 2015-91 to 2015-181.
+%ESTIMATED_WALL_TIME_PER_DATA_TIME = 3.4/86400;   % Could be used for predicting (and displaying) the wall time used by the function.
+    
 Constants; % Some constants
 global datapath apppath
 datapath = '../../Cassini_LP_DATA_Archive/';
@@ -37,7 +40,7 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
     disp('NOTE: if error, check if date interval begins OR ends when there is no data.');
     t_start = input('Start date (inclusive): ');
-    t_end   = input('End date   (exclusive): ');
+    t_end   = input('End date   (EXclusive): ');
     nodata_log = [];
    
     t_start = interpret_user_input_day(t_start);

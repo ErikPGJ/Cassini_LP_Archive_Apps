@@ -9,7 +9,8 @@
 %
 function Run_LP_Archi
 
-    ESTIMATED_WALL_TIME_PER_DATA_TIME = 20/86400;   % Used for predicting (and displaying) the wall time used by the function.
+    % Measured speed from generating 2015-91 to 2015-181.
+    ESTIMATED_WALL_TIME_PER_DATA_TIME = 8.4/86400;   % Used for predicting (and displaying) the wall time used by the function.
     
     disp('Cassini/RPWS/LP data archiver');
     disp('Enter start and end dates for data you wish to archive');
