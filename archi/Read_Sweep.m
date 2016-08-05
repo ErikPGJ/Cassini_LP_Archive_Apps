@@ -1,8 +1,9 @@
 function [t,U,I] = Read_Sweep(time, DBH, CONTENTS, DURATION)
-%Read_Sweep_mm reads bias and current data of CASSINI/RPWS/LP.
-%usage:
+% Read_Sweep_mm reads bias and current data of CASSINI/RPWS/LP.
+%
+% Usage:
 % In easiest case, just run 'Read_Sweep'. The specific time intervals are
-% asked and the data set will be stored in the 'base' workspace as:
+% asked for and the data set will be stored in the 'base' workspace as:
 %   t_sweep for time, U_sweep for bias voltage, and I_sweep for current.
 % Altenatively, [t,U,I] = Read_Sweep_mm(time) returns data set instead.
 % time should be in either epoch or in format of:
@@ -20,7 +21,9 @@ function [t,U,I] = Read_Sweep(time, DBH, CONTENTS, DURATION)
 % WARNING!!! Uses assignin('base', ...)
 % BUG(?): Can throw error for times without data.
 
-global datapath apppath
+global datapath %apppath
+
+datapath = '../../Cassini_LP_DATA_Archive/';
 
 % ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  == =
 % --- OPEN DBH ------------------------------------------------------------
@@ -66,8 +69,6 @@ if isempty(CONTENTS) || isempty(DURATION)
     end
 end
 
-datapath = '../../Cassini_LP_DATA_Archive/';
-
 % ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  == =
 % --- chose read time interval --------------------------------------------
 if nargin<1
@@ -85,19 +86,30 @@ else            time = st; end
 if ~exist('et','var')
     block = find(toepoch(CONTENTS) <= st & st <= toepoch(CONTENTS)+DURATION);
 else
+    % Assign st_block := The (index to) CONTENTS block beginning immediately before st.
+    %        et_block := The (index to) CONTENTS block ending    immediately after  et (or the last available CONTENTS block if no such exists).
     st_block = find(toepoch(CONTENTS) <= st);
     if ~isempty(st_block)
         st_block = st_block(end);
     end
     et_block = find(et <= toepoch(CONTENTS)+DURATION);
-    if ~isempty(et_block)
+    if isempty(et_block)
+        et_block = size(CONTENTS, 1);    % Index to last row in CONTENTS.
+    else
         et_block = et_block(1);
     end
     block = st_block:et_block;
 end
 
+if isempty(block)
+    % TEMPORARY(?) ERROR CHECK.
+    % Throw explicit error message for this since the following command will throw a less comprehensible error otherwise.
+    % NOTE: toepoch refers to @spis:/usr/local/isdat/clients/APIs/matlab/matlib/toepoch.m which should probably not be
+    % modified unilaterally.
+    error('There is not enough data to analyze.')
+end
 checkcont = toepoch(CONTENTS(block, :));
-checkcont = find(checkcont >= st & checkcont <= et, 1); % doesn't matter how many values in there, at least 1 is sufficient
+checkcont = find(checkcont >= st & checkcont <= et, 1); % Doesn't matter how many values in there, at least 1 is sufficient.
 if isempty(checkcont)
     disp('No data in the time interval');
     t = []; U = []; I = [];
