@@ -1,21 +1,32 @@
+% Function for reading density data manually
+%
+% Usage: [t U I] = Read_Density(CA, start_time, end_time);
+%
+% Ne_I  is continuous current data (denoted 20Hz)
+% t_Ne  is the corresponding time
+% U_DAC is corresponding DAC voltage
+% time should be in either epoch or in format of [yyyy mm dd hh mm ss]
+% default S/C is Cassini
+%
+% Based on Process.m by Jan-Erik Wahlund (original in the ../cnt_cur_draft folder)
+% Oleg Shebanits, 2012-02
+%
 function [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time)
+%
+% PROPOSAL: Merge two identical occurrences of ~isempty(CA.DURATION(CA.DURATION > 7200))...end into separate function.
+%
 
 global datapath
 
-% function for reading density data manually
-% Usage: [t U I] = Read_Density(CA, start_time, end_time);
-% Ne_I is continuous current data (denoted 20Hz), t_Ne is the
-% corresponding time, U_DAC is corresponding DAC voltage
-% time should be in either epoch or in format of [yyyy mm dd hh mm ss]
-% default S/C is Cassini
-% based on Process.m by Jan-Erik Wahlund (original in the ../cnt_cur_draft folder)
-% Oleg Shebanits, 2012-02
 
 
+%===========================================================
+% Use default initialization if not all arguments supplied.
+%===========================================================
 if nargin<1
     CA = Setup_Cassini;
     CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % Connect to ISDAT
-    [CA.CONTENTS,CA.DURATION]=GetContents(CA); % Get full contents list
+    [CA.CONTENTS,CA.DURATION]=GetContents(CA); % Get full contents list    
     if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
         warning('WARNING! Found DURATION > 1h10m!');
         disp('Date (CONTENTS)         DURATION');
@@ -40,7 +51,8 @@ if nargin<3
     end_time = input('End time? Format [YYYY MM DD hh mm ss]: ');
 end
 
- 
+
+
 if(CA.DBH==0) % Only reconnect if not connected
     CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % Connect to ISDAT
 end
@@ -63,7 +75,10 @@ if isempty(CA.CONTENTS) || isempty(CA.DURATION)
         end
     end
 end
-  
+
+
+
+% Convert start_time, end_time to the standard time format if not already.
 if length(start_time) > 1
     start_time = toepoch(start_time);
 end
@@ -71,12 +86,20 @@ if length(end_time) > 1
     end_time = toepoch(end_time);
 end
 
+
+
+%=======================================================================================================================
+% Find the EARLIEST time interval that BEGINS AFTER start_time (??!!!)
+% Find the LATEST time interval that BEGINS BEFORE end_time.
+% 
+% (Assuming all time intervals are non-overlapping and consecutive, finds those full intervals that lie in the interval
+% start_time--end_time.)
+%=======================================================================================================================
 start_ind   = find( start_time < toepoch(CA.CONTENTS) );
 if isempty(start_ind)
     error('Can not find any ISDAT data for the requested time interval.')
 end
 start_entry = start_ind(1);
-
 end_ind     = find( end_time < toepoch(CA.CONTENTS) );
 if (~isempty(end_ind))
     end_entry = end_ind(1) - 1;
@@ -86,19 +109,23 @@ end
 
 if (start_entry <= end_entry)
     
-    disp([num2str(start_entry) '   ' datestr(CA.CONTENTS(start_entry,:))]);
-    disp([num2str(end_entry) '   ' datestr(CA.CONTENTS(end_entry,:))]);
+    disp(['First ISDAT entry to use: ' num2str(start_entry) '   ' datestr(CA.CONTENTS(start_entry,:))]);
+    disp(['Last  ISDAT entry to use: ' num2str(end_entry)   '   ' datestr(CA.CONTENTS(end_entry,:))]);
     disp(['Processing ' datestr(fromepoch(start_time), 'yyyy-mm-dd')]);
 
+    % Initialize empty arrays to later successively add to.
+    % NOTE: (t, Ne_TM, I) and (t_DAC_tmp, DAC_tmp, U_tmp) will grow in separate increments.
+    t_DAC = [];
+    t     = [];
+    %
+    Ne_TM = [];
+    I     = [];
+    DAC   = [];
+    U     = [];
     
-    t_DAC  = [];
-    t   = [];
-    
-    Ne_TM  = [];
-    I   = [];
-    DAC    = [];
-    U = [];
-    
+    %========================================
+    % Iterate over all ISDAT time intervals.
+    %========================================
     for j = start_entry:end_entry,
         %    % no need fot the pausing as of 2012, hardware is fast enough
         %         % Pause a bit every loop to avoid killing isdat memory
@@ -121,64 +148,72 @@ if (start_entry <= end_entry)
         
         %disp(fromepoch( t_DAC_tmp(1,:) ));
         
-        t  = [t; t_tmp];
+        % Add to cumulatively to arrays
+        t     = [t;     t_tmp];
         t_DAC = [t_DAC; t_DAC_tmp];
-        
+        %
         Ne_TM = [Ne_TM; Ne_TM_tmp];
-        I  = [I; I_tmp];
-        DAC   = [DAC; DAC_tmp];
-        U = [U; U_tmp];
-        
-    end % for...
+        I     = [I;     I_tmp];
+        DAC   = [DAC;   DAC_tmp];
+        U     = [U;     U_tmp];
+    end    % for
     
     if isempty(t)
-        t_Ne = t;
+        % Return with empty return values.
+        t_Ne  = t;
         U_DAC = [];
-        Ne_I = [];
+        Ne_I  = [];
         return;
     end
     
     %clear Ne_TM_tmp I_tmp DAC_tmp U_tmp t_tmp t_DAC_tmp
     
+    %==================================================================================================
+    % Take precautions if t_DAC is not sorted
+    % ONLY for U, DAC, t_DAC: Only keep data points for which t_DAC is larger than the preceeding one.
+    %==================================================================================================
     if ~issorted(t_DAC)
         % The DAC values are sometimes weird!
-        ind        = find( diff(t_DAC) > 0 );
-        t_DAC_new  = zeros(length(t_DAC)-length(ind),1);
-        DAC_new    = zeros(length(t_DAC)-length(ind),1);
-        U_new  = zeros(length(t_DAC)-length(ind),1);
+        ind       = find( diff(t_DAC) > 0 );    % Find indices for which t_DAC increase.
+        t_DAC_new = zeros(length(t_DAC)-length(ind),1);
+        DAC_new   = zeros(length(t_DAC)-length(ind),1);
+        U_new     = zeros(length(t_DAC)-length(ind),1);
         
         k = 1;
         t_DAC_new(1) = t_DAC(1);
         DAC_new(1)   = DAC(1);
-        U_new(1) = U(1);
+        U_new(1)     = U(1);
         k = k+1;
         for j = 2:length(t_DAC)
-            if t_DAC(j) < t_DAC(j-1) % Skip it!
+            if t_DAC(j) < t_DAC(j-1)   % Skip it!
             else % include
                 t_DAC_new(k) = t_DAC(j);
                 DAC_new(k)   = DAC(j);
-                U_new(k) = U(j);
+                U_new(k)     = U(j);
                 k = k+1;
             end
         end
         
         % clear t_DAC DAC U
-        U = U_new;
+        U     = U_new;
         DAC   = DAC_new;
         t_DAC = t_DAC_new;
     end
     
-    
+    %================================================================
+    % Take away some bad initial I data samples in each DAC segment.
+    %================================================================
     n_DAC = length(DAC);
     for j = 1:n_DAC
-        if j == n_DAC
+        % pts_ind := The indices within DAC period j.
+        if j == n_DAC   % Last iteration
             pts_ind = find( (t >= t_DAC(j)) );
-        else
+        else    % Not last iteration
             pts_ind = find( (t >= t_DAC(j)) & (t < t_DAC(j+1)) );
         end
         
         if isempty( pts_ind ) | (length(t(pts_ind)) < 2)
-            disp( ['No (or 1) data points associated with DAC number ' int2str(j)] );
+            disp( ['Zero (or one) data points associated with DAC number ' int2str(j)] );
         else
             % Take away some bad initial data samples in each segment
             I(pts_ind) = Clean_Density( I(pts_ind), t(pts_ind) );
@@ -199,7 +234,9 @@ if (start_entry <= end_entry)
     %Plot_Cal;
     %end
     
-    % if any double-values of t_DAC, remove
+    %=============================================================
+    % For any double-values of t_DAC : Remove U and t_DAC values.
+    %=============================================================
     if ~isempty(diff(t_DAC) == 0)
         U(diff(t_DAC) == 0) = []; % this one first
         t_DAC(diff(t_DAC) == 0) = [];
