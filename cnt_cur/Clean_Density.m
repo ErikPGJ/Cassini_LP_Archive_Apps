@@ -2,8 +2,10 @@ function [Ne_out] = Clean_Density( Ne, t )
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % function [Ne_out] = Clean_Density( Ne, t )
 %
-%   Matlab function that clean away some bad points in the RPWS LP density
-%   data.
+%   Matlab function that cleans away some bad points in the RPWS LP density
+%   data. Sets (replaces) the first m values of Ne with NaN.
+%
+%   Ne_out = Modified Ne.
 %
 % J-E. Wahlund, IRF-Uppsala, 2004.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -35,6 +37,7 @@ function [Ne_out] = Clean_Density( Ne, t )
      % 20 Hz DATA
      n_skip = 7;
   end
+  n_skip = min(n_skip, length(Ne));   % Needed for short vectors. Example: data for 2016-204 (the version available at IRF-U as of 2016-08-25).
 
   Ne( 1:n_skip ) = NaN .* zeros(1,n_skip);
   Ne_out = Ne;
