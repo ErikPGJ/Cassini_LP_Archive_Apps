@@ -4,6 +4,7 @@
 % Returns [YEAR MONTH DAY 0 0 0], i.e. BEGINNING OF DAY.
 %
 % Created by Erik P G Johansson, IRF Uppsala, Sweden 2016-01-26
+% (Code reorganized into separate function to avoid duplicating code.)
 function time_spec = interpret_user_input_day(input_time)
 
 if ~isempty(input_time) % unless empty input

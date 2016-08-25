@@ -12,8 +12,9 @@ function [Ne_out] = Clean_Density( Ne, t )
 
 % Check number of input and output parameters.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  error(nargchk(2,2,nargin))
-  error(nargchk(1,1,nargout))
+  narginchk(2,2)
+  nargoutchk(1,1)
+
 
 % Make input data as column vectors, and 
 % check size of data and time.

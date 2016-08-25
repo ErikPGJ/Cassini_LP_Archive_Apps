@@ -58,6 +58,7 @@ if(CA.DBH==0) % Only reconnect if not connected
 end
 
 if isempty(CA.CONTENTS) || isempty(CA.DURATION)
+    % NOTE: The below section seems to be a copy of code further up.
     [CA.CONTENTS,CA.DURATION]=GetContents(CA); % Get full contents list
     if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
         warning('WARNING! Found DURATION > 1h10m!');
@@ -89,8 +90,8 @@ end
 
 
 %=======================================================================================================================
-% Find the EARLIEST time interval that BEGINS AFTER start_time (??!!!)
-% Find the LATEST time interval that BEGINS BEFORE end_time.
+% Find the EARLIEST time interval that BEGINS AFTER  start_time (??!!!)
+% Find the LATEST   time interval that BEGINS BEFORE end_time.
 % 
 % (Assuming all time intervals are non-overlapping and consecutive, finds those full intervals that lie in the interval
 % start_time--end_time.)
@@ -127,8 +128,8 @@ if (start_entry <= end_entry)
     % Iterate over all ISDAT time intervals.
     %========================================
     for j = start_entry:end_entry,
-        %    % no need fot the pausing as of 2012, hardware is fast enough
-        %         % Pause a bit every loop to avoid killing isdat memory
+        %    % No need for pausing as of 2012, hardware is fast enough.
+        %         % Pause a bit every loop to avoid killing isdat memory.
         %         %disp(['Pausing ' num2str(1) ' seconds to avoid messing Matlab memory']);
         %	 disp(j); disp(end_entry);
         %         RI_CAcounter(1);
@@ -148,7 +149,7 @@ if (start_entry <= end_entry)
         
         %disp(fromepoch( t_DAC_tmp(1,:) ));
         
-        % Add to cumulatively to arrays
+        % Add cumulatively to arrays
         t     = [t;     t_tmp];
         t_DAC = [t_DAC; t_DAC_tmp];
         %
@@ -215,7 +216,7 @@ if (start_entry <= end_entry)
         if isempty( pts_ind ) | (length(t(pts_ind)) < 2)
             disp( ['Zero (or one) data points associated with DAC number ' int2str(j)] );
         else
-            % Take away some bad initial data samples in each segment
+            % Take away some bad initial data samples in each segment.
             I(pts_ind) = Clean_Density( I(pts_ind), t(pts_ind) );
         end
     end

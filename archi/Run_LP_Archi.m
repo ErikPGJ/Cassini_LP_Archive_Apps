@@ -1,23 +1,31 @@
 % Run_LP_Archi gets LP data from DBH for a specified time interval, removes
 % anomalies, calibrates and saves LP data in a .dat (ASCII) as:
-% [YYYY     MM      DD      h       m       s       bias    current]
-% [years    months  days    hours   minutes seconds volts   ampers]
-% all values are given with 6 significant digits, delimiter is TAB
+%    [YYYY    MM      DD    h      m        s        bias   current]
+%     years   months  days  hours  minutes  seconds  volts  amperes   .
+%
+% All values are given with 6 significant digits, delimiter is TAB,
 % filename is /Cassini_LP_DATA_Archive/LP_Swp_Clb/LP_archive_YYYYDOY.dat
 %
 % Oleg Shebanits, IRFU, 2012-03
 %
-function Run_LP_Archi
+function Run_LP_Archi(varargin)
 
     % Measured speed from generating 2015-91 to 2015-181.
     ESTIMATED_WALL_TIME_PER_DATA_TIME = 8.4/86400;   % Used for predicting (and displaying) the wall time used by the function.
     
-    disp('Cassini/RPWS/LP data archiver');
-    disp('Enter start and end dates for data you wish to archive');
-    disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
-    disp('NOTE: if error, check if date interval begins OR ends when there is no data');
-    start_time = input('Start date (inclusive): ');
-    end_time   = input('End date   (exclusive): ');
+    if length(varargin) == 0
+        disp('Cassini/RPWS/LP data archiver');
+        disp('Enter start and end dates for data you wish to archive');
+        disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
+        disp('NOTE: if error, check if date interval begins OR ends when there is no data');
+        start_time = input('Start date (INclusive): ');
+        end_time   = input('End date   (EXclusive): ');
+    elseif length(varargin) == 2
+        start_time = varargin{1};
+        end_time   = varargin{2};
+    else
+        error('Illegal number of arguments')
+    end
 
     global datapath apppath
     datapath = '../../Cassini_LP_DATA_Archive/';
@@ -132,7 +140,7 @@ function Run_LP_Archi
             file_info = dir(filename);
             file_size = file_info.bytes/(1024*1024);
             %data_log = [data_log; t_day_begin];
-            disp(['Done. File size: ', num2str(file_size), ' MB']);
+            disp(['Done. File size: ', num2str(file_size), ' MiB']);
         else
             disp(['No data from ' datestr(t_day_begin, 'yyyy-mm-dd') ' skipping']);
             nodata_log = [nodata_log; t_day_begin];
