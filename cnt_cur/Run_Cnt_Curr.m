@@ -1,11 +1,12 @@
-%===================================================================================================
 %
 % LP Continuous Current extraction and archiving for Cassini
+%
+% ARGUMENTS: [t_start_incl  t_end_excl]  (optional)
+%  
 %
 % NOTE: Not called from anywhere.
 % PROPOSAL: Rewrite as function without any user interaction or move user interaction to wrapper script.
 %    NOTE: There is user interaction when finding intervals longer than ~1 h.
-%===================================================================================================
 function Run_Cnt_Curr(varargin)
 
 % Should not use "clear all" since it clears breakpoints in OTHER FILES, but NOT IN THIS FILE.
@@ -19,11 +20,17 @@ global datapath apppath
 datapath = '../../Cassini_LP_DATA_Archive/';
 apppath  = '../../Cassini_LP_Archive_Apps/';
 
+% ASSERTIONS
 if ~exist(datapath, 'dir') || ~exist(apppath, 'dir')
     datapath
     apppath
     error('Can not find directories. (You might have the wrong current directory.)')
 end
+[parentDir, baseName, ext] = fileparts(pwd);
+if ~strcmp([baseName,ext], 'cnt_cur')
+    error('This code appears to be written to be called with cnt_cur/ as current directory. Otherwise (if called from archi/) it might call the wrong but same-named functions causing it produce files with bad values (it uses the wrong Calibrate.m).')
+end
+
 
 Analyse='Cassini';
 if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
@@ -64,7 +71,7 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     % Check for longer than expected time intervals.
     % Unknown why.
     %==================================================
-    if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+    if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600 s)
         warning('WARNING! Found DURATION > 1h10m!');
         disp('Date (CONTENTS)         DURATION');
         disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS     '), num2str(CA.DURATION(CA.DURATION > 7200))]);

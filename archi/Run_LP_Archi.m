@@ -8,6 +8,9 @@
 %
 % Oleg Shebanits, IRFU, 2012-03
 %
+%
+% ARGUMENTS: [t_start t_end]  (optional)
+%  
 function Run_LP_Archi(varargin)
 
     % Measured speed from generating 2015-91 to 2015-181.
@@ -35,6 +38,10 @@ function Run_LP_Archi(varargin)
         datapath
         apppath
         error('Can not find relative directories. (You might have the wrong current directory.)')
+    end
+    [parentDir, baseName, ext] = fileparts(pwd);
+    if ~strcmp([baseName,ext], 'archi')
+        error('This code appears to be written to be called with archi/ as current directory. Otherwise (if called from archi/) it might call the wrong but same-named functions causing it to crash.')
     end
 
     % % ------------------------------------
