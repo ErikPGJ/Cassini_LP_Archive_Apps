@@ -1,11 +1,14 @@
-function [I_cal] = Calibrate(SC, tm_data)
+function [I_cal] = Calibrate_archi(SC, tm_data)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% [I_cal] = Calibrate(SC, tm_data);
+% [I_cal] = Calibrate_archi(SC, tm_data);
 %
 %    Matlab function that calibrates Cassini LP data. 
 %
 % Jan-Erik Wahlund, Swedish Institute of Space Physics, Uppsala Division, 1997
+%
+% 2016-11-07: Erik P G Johansson:
+%    Renamed "Calibrate" --> "Calibrate_archi" to not confuse it with other function.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

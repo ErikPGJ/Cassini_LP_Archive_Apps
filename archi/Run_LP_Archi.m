@@ -9,7 +9,7 @@
 % Oleg Shebanits, IRFU, 2012-03
 %
 %
-% ARGUMENTS: [t_start t_end]  (optional)
+% ARGUMENTS: [t_start_incl t_end_excl]  (optional)
 %  
 function Run_LP_Archi(varargin)
 
@@ -34,6 +34,7 @@ function Run_LP_Archi(varargin)
     datapath = '../../Cassini_LP_DATA_Archive/';
     apppath  = '../../Cassini_LP_Archive_Apps/';
     
+    % ~ASSERTIONS
     if ~exist(datapath, 'dir') || ~exist(apppath, 'dir')
         datapath
         apppath

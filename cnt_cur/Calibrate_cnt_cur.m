@@ -1,4 +1,4 @@
-function I2=Calibrate(SC,I1)
+function I2=Calibrate_cnt_cur(SC,I1)
 
 I2=I1; % Default if none of the projects below are recognized.
 

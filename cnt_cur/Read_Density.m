@@ -145,7 +145,7 @@ if (start_entry <= end_entry)
                 continue
             end
         end
-        I_tmp = Calibrate( CA, real(Ne_TM_tmp) ); % Calibrate does not accept complex numbers (why is it complex anyway)
+        I_tmp = Calibrate_cnt_cur( CA, real(Ne_TM_tmp) ); % Calibrate does not accept complex numbers (why is it complex anyway)
         
         %disp(fromepoch( t_DAC_tmp(1,:) ));
         

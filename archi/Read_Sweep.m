@@ -306,7 +306,7 @@ I = current_out(t_int);
 %-=-=-=-=-calibration of the current
 et = find(diff(t)>1); st = [1;et+1]; et = [et;length(t)]; % sets up indexes for start/end times for each sweep
 for ii=1:length(st)
-    I(st(ii):et(ii)) = Calibrate(0, I(st(ii):et(ii)));
+    I(st(ii):et(ii)) = Calibrate_archi(0, I(st(ii):et(ii)));
 end
 %-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 

@@ -20,7 +20,7 @@ global datapath apppath
 datapath = '../../Cassini_LP_DATA_Archive/';
 apppath  = '../../Cassini_LP_Archive_Apps/';
 
-% ASSERTIONS
+% ~ASSERTIONS
 if ~exist(datapath, 'dir') || ~exist(apppath, 'dir')
     datapath
     apppath
@@ -28,7 +28,7 @@ if ~exist(datapath, 'dir') || ~exist(apppath, 'dir')
 end
 [parentDir, baseName, ext] = fileparts(pwd);
 if ~strcmp([baseName,ext], 'cnt_cur')
-    error('This code appears to be written to be called with cnt_cur/ as current directory. Otherwise (if called from archi/) it might call the wrong but same-named functions causing it produce files with bad values (it uses the wrong Calibrate.m).')
+    error('This code appears to be written to be called with cnt_cur/ as current directory. Otherwise (if called from archi/) it might call the wrong but same-named functions causing it produce files with bad values (in the past it used the wrong Calibrate.m).')
 end
 
 
