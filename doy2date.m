@@ -10,6 +10,8 @@ function [out] = doy2date(YEAR,DOY)
   error(nargchk(2,2,nargin))
 
 % ===================================================================
+YEAR = reshape(YEAR,length(YEAR),1); DOY = reshape(DOY,length(DOY),1);
+
 
 out = ones(length(YEAR(:,1)),3);
 for n=1:length(YEAR(:,1))
