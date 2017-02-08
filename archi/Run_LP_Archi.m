@@ -91,7 +91,7 @@ function Run_LP_Archi(varargin)
     if DBH == 0, disp([DBH_name,':',DBH_port,' does not respond.'])
         return
     end
-    [CONTENTS,DURATION] = isGetContentLite(DBH,'Cassini','','lp','','','','');
+    [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
 
     if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
         warning('WARNING! Found DURATION > 1h10m!');

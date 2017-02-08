@@ -1,12 +1,16 @@
 % Function for reading density data manually
 %
-% Usage: [t U I] = Read_Density(CA, start_time, end_time);
+% Usage: [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time);
 %
-% Ne_I  is continuous current data (denoted 20Hz)
-% t_Ne  is the corresponding time
-% U_DAC is corresponding DAC voltage
-% time should be in either epoch or in format of [yyyy mm dd hh mm ss]
-% default S/C is Cassini
+% RETURN VALUES
+% =============
+% Ne_I     Continuous current data (denoted 20 Hz)
+% t_Ne     Corresponding time
+% U_DAC    Corresponding DAC voltage
+% Return argument all have the same array size.
+%
+% Time should be in either epoch or in format of [yyyy mm dd hh mm ss].
+% Default S/C is Cassini.
 %
 % Based on Process.m by Jan-Erik Wahlund (original in the ../cnt_cur_draft folder)
 % Oleg Shebanits, 2012-02
@@ -127,16 +131,18 @@ if (start_entry <= end_entry)
     %========================================
     % Iterate over all ISDAT time intervals.
     %========================================
-    for j = start_entry:end_entry,
+ 
+    for j = start_entry:end_entry
         %    % No need for pausing as of 2012, hardware is fast enough.
         %         % Pause a bit every loop to avoid killing isdat memory.
         %         %disp(['Pausing ' num2str(1) ' seconds to avoid messing Matlab memory']);
         %	 disp(j); disp(end_entry);
         %         RI_CAcounter(1);
         
-        % Density data
+        % Read density data for one ISDAT time interval.
         try
             [t_tmp, Ne_TM_tmp, t_DAC_tmp, DAC_tmp, U_tmp] = GetDensity(CA,j);
+            ;
         catch
             CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % RE-Connect to ISDAT
             try

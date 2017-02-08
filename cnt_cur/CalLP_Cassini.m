@@ -13,8 +13,8 @@ function [I_cal] = CalLP_Cassini( tm_data );
 % MUST use the lf calibration files for continuous current data since it is 
 % go through the A/D converter!
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  load LPp_lg_lf.dat
-  load LPn_lg_lf.dat
+  load LPp_lg_lf.dat     % Loads MATLAB variable LPp_lg_lf.
+  load LPn_lg_lf.dat     % Loads MATLAB variable LPn_lg_lf.
 
   I_n  = abs( LPn_lg_lf( :, 1) );
   I_p  = LPp_lg_lf( :, 1);

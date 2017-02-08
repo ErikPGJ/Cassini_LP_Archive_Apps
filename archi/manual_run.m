@@ -2,7 +2,7 @@ time = input('Enter [year doy] : ');
 time = toepoch([doy2date(time(1),time(2)) 0 0 0]);
 
 DBH=Connect2DBH('titan.irfu.se',33); % Connect to ISDAT
-[CONTENTS,DURATION]=isGetContentLite(DBH,'Cassini','','lp','','','','');; % Get full contents list
+[CONTENTS,DURATION]=isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');; % Get full contents list
 if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
     warning('WARNING! Found DURATION > 1h10m!');
     disp('Date (CONTENTS)         DURATION');

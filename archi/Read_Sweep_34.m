@@ -38,7 +38,7 @@ function [t,U,I] = Read_Sweep(time,DBH, CONTENTS, DURATION)
   end
   
   if isempty(CONTENTS) || isempty(DURATION)
-      [CONTENTS,DURATION] = isGetContentLite(DBH,'Cassini','','lp','','','','');
+      [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
       if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
           warning('WARNING! Found DURATION > 1h10m!');
           disp('Date (CONTENTS)         DURATION');

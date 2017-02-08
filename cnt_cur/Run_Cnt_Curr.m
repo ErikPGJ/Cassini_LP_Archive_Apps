@@ -12,7 +12,7 @@ function Run_Cnt_Curr(varargin)
 % Should not use "clear all" since it clears breakpoints in OTHER FILES, but NOT IN THIS FILE.
 clear VARIABLES
 
-% Measured speed from generating 2015-91 to 2015-181.
+% Measured speed [days/file?] from generating 2015-91 to 2015-181.
 %ESTIMATED_WALL_TIME_PER_DATA_TIME = 3.4/86400;   % Could be used for predicting (and displaying) the wall time used by the function.
 
 Constants; % Some constants
@@ -89,10 +89,11 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     %if ~isempty(CA.DURATION(CA.DURATION < 0)) % Check DURATION for anomalies (should not be larger than 3600s)
     %    warning('WARNING! Found intervals with negative length.')
     %end
-    
+
     t_work_start = clock;   % Start time keeping. Exclude time used for user interaction.
-    
-    
+
+
+
     %==================================================
     % Iterate over days : Obtain data and save to file
     %==================================================
@@ -110,6 +111,8 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
             if isempty(t_Ne)
                 %========================
                 % CASE: There is NO data
+                %
+                % Add to nodata_log.dat.
                 %========================
                 disp(['No data from ' datestr(fromepoch(time), 'yyyy-mm-dd')]);
                 nodata_log = [nodata_log; time];
@@ -131,9 +134,11 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
                 time = time + 86400; % on to the next day
                 continue;
             else
-                %========================
+                %=====================
                 % CASE: There is data
-                %========================
+                %
+                % Write data file.
+                %=====================
                 time_ymd = fromepoch(t_Ne(1)); % convert from epoch for the file name
                 % 86400 seconds in a day
                 filename = [datapath, sprintf('Cnt_CurDat/LP_CntCur_%4d%03d.dat', time_ymd(1), date2doy(time_ymd(1:3)))];

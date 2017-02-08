@@ -51,22 +51,23 @@ if DBH == 0, disp([DBH_name,':',DBH_port,' does not respond.']), return, end
 
 
 if isempty(CONTENTS) || isempty(DURATION)
-    [CONTENTS,DURATION] = isGetContentLite(DBH,'Cassini','','lp','','','','');
-    if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-        warning('WARNING! Found DURATION > 1h10m!');
-        disp('Date (CONTENTS)         DURATION');
-        disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
-        check = input('Proceed? Y/N [N]: ','s');
-        if isempty(check) || check == 'N'
-            disp('Aborted by user');
-            return;
-        end
-        if check == 'Y'
-            disp('cutting out anomaly in DURATION and CONTENTS');
-            CONTENTS(DURATION > 7200,:) = [];
-            DURATION(DURATION > 7200) = [];
-        end
-    end
+    error('Argument CONTENTS or DURATION is empty')
+%     [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
+%     if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%         warning('WARNING! Found DURATION > 1h10m!');
+%         disp('Date (CONTENTS)         DURATION');
+%         disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
+%         check = input('Proceed? Y/N [N]: ','s');
+%         if isempty(check) || check == 'N'
+%             disp('Aborted by user');
+%             return;
+%         end
+%         if check == 'Y'
+%             disp('cutting out anomaly in DURATION and CONTENTS');
+%             CONTENTS(DURATION > 7200,:) = [];
+%             DURATION(DURATION > 7200) = [];
+%         end
+%     end
 end
 
 % ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  == =
@@ -142,7 +143,8 @@ spikelog_I = [];
 
 for ii = block(1):block(end)
     
-    t_start = toepoch(CONTENTS(ii,:)); dt = DURATION(ii);
+    t_start = toepoch(CONTENTS(ii,:));
+    dt = DURATION(ii);
     
     try
         [U_time,bias]    = ...
@@ -242,8 +244,6 @@ if ~isempty(spikelog_I)
 end
 
 clear AnmI
-
-
 clear AnmU
 
 
