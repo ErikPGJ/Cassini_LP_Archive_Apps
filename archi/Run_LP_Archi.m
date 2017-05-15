@@ -69,7 +69,7 @@ function Run_LP_Archi(varargin)
     
 
     start_time = interpret_user_input_day(start_time);
-    end_time = interpret_user_input_day(end_time);
+    end_time   = interpret_user_input_day(end_time);
 
 
     total_time_s = toepoch(end_time) - toepoch(start_time);
@@ -116,22 +116,25 @@ function Run_LP_Archi(varargin)
     days_requested = toepoch(start_time):86400:(toepoch(end_time)-86400);  
     days_requested = fromepoch(days_requested);
     
-    time = intersect(CONTENTS(:,1:3), days_requested(:,1:3), 'rows');   % Find days existing in CONTENTS. NOTE: This will eliminate requested days for which there is no data.
-    [N_days N_time_fields] = size(time);   % N_days = days with data, not number of requested days (I think).
-    time = [time zeros(N_days,N_time_fields)];
+    % Select the requested days from the data in CONTENTS.
+    % NOTE: This will eliminate requested days for which there is no data.    
+    % Produces list of days on format: [year, month, day, 0, 0, 0].
+    days_requested_available = intersect(CONTENTS(:,1:3), days_requested(:,1:3), 'rows');   % Find days existing in CONTENTS. 
+    [N_days N_time_fields] = size(days_requested_available);   % N_days = days with data, not number of requested days (I think).
+    days_requested_available = [days_requested_available zeros(N_days,N_time_fields)];
     %clear N_time_fields     % Seems unnecessary. Remove when sure that only functions, and no scripts, are called afterwards.
 
-    %data_log = time; % save available days
+    %data_log = days_requested_available; % save available days
 
     t_work_start = clock;   % Start time keeping. Exclude time used for user interaction.
 
-    % time = toepoch(time); % converting to epoch for use in the loop
+    % days_requested_available = toepoch(days_requested_available); % converting to epoch for use in the loop
     nodata_log = [];
     %data_log = [];
     for i = 1:N_days
         % run sweep reading function to calibrate and fix mismatches
-        t_day_begin = time(i,:);                            % Beginning of the day.
-        t_day_end = fromepoch(toepoch(time(i,:)) + 86400);  % End of the day (next day 00:00:00).
+        t_day_begin = days_requested_available(i,:);                            % Beginning of the day.
+        t_day_end = fromepoch(toepoch(days_requested_available(i,:)) + 86400);  % End of the day (next day 00:00:00).
         [t_sweep, U_sweep, I_sweep] = Read_Sweep([t_day_begin; t_day_end], DBH, CONTENTS, DURATION);
         if ~isempty(t_sweep)
             filename = [datapath, sprintf('LP_Swp_Clb/LP_archive_%4d%03d.dat', t_day_begin(1), date2doy(t_day_begin(1:3)))];

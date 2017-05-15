@@ -18,8 +18,12 @@ function [t,U,I] = Read_Sweep(time, DBH, CONTENTS, DURATION)
 % (commented as there is no need to fix double plateau values, saving ALL data)
 % Oleg Shebanits, IRFU/Uppsala, 2012-02-07.
 %
-% WARNING!!! Uses assignin('base', ...)
+%
+% WARNING!!! The code uses assignin('base', ...) to assign variables outside function.
 % BUG(?): Can throw error for times without data.
+% WARNING: Code assumes that it can either append to, or create file '../../Cassini_LP_DATA_Archive/LP_Swp_Clb/spikelog.mat' (hardcoded path).
+% WARNING: Sets global variable "datapath".
+
 
 global datapath %apppath
 
@@ -145,6 +149,8 @@ for ii = block(1):block(end)
     
     t_start = toepoch(CONTENTS(ii,:));
     dt = DURATION(ii);
+    % Isdat time tag is not updated correctly sometimes.
+    %if dt<(3600-2) dt = 3600-0.01; end
     
     try
         [U_time,bias]    = ...
@@ -223,7 +229,7 @@ if ~isempty(spikelog_U)
     end
     disp(['Anomaly saved in ' Ulogvar]);
     %fid1 = fopen('spikelog_U_bias.dat', 'a'); fprintf(fid1, '%6.6g %6.6g\n', spikelog_U); fclose(fid1);
-    
+
 end
 
 if ~isempty(spikelog_I)

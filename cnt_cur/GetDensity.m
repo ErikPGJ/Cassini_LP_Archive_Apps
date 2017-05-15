@@ -27,16 +27,21 @@ if (length(SC)>0)
     
     % Get "density data" (denoted 20 Hz), i.e. measured current.
     % Return values are just returned from this function (GetDensity).
-    [t_Ne, Ne_TM]   = isGetDataLite( SC.DBH, SC.CONTENTS(Entry,:), SC.DURATION(Entry), SC.PRO, SC.MEM, SC.INS, SC.SIG1, SC.SEN3, SC.CHA1, SC.PAR );   % Unique arguments: SEN3, CHA1
+    
+    t_start = SC.CONTENTS(Entry,:);
+    dt      = SC.DURATION(Entry);
+   %if dt<3600-0.1, dt = 3600-0.01; end
+    
+    [t_Ne, Ne_TM]   = isGetDataLite( SC.DBH, SC.CONTENTS(Entry,:), dt, SC.PRO, SC.MEM, SC.INS, SC.SIG1, SC.SEN3, SC.CHA1, SC.PAR );   % Unique arguments: SEN3, CHA1
     
     % Get "DAC values", i.e. bias voltages in TM units.
-    [t_DAC, DAC]    = isGetDataLite( SC.DBH, SC.CONTENTS(Entry,:), SC.DURATION(Entry), SC.PRO, SC.MEM, SC.INS, SC.SIG1, SC.SEN4, SC.CHA1, SC.PAR );   % Unique arguments: SEN4, CHA1
+    [t_DAC, DAC]    = isGetDataLite( SC.DBH, SC.CONTENTS(Entry,:), dt, SC.PRO, SC.MEM, SC.INS, SC.SIG1, SC.SEN4, SC.CHA1, SC.PAR );   % Unique arguments: SEN4, CHA1
     
     % The Titan +/-4 V mode has density bias = +4 V, which is max 256 DAC setting.
     % Other data has either smart Bias setting with zero at 127.5 DAC
     % and 256 DAC corresponding to +32 V. Or they have +10 V bias.
     % Read sweep bias
-    [t_bias, Ubias] = isGetDataLite( SC.DBH, SC.CONTENTS(Entry,:), SC.DURATION(Entry), SC.PRO, SC.MEM, SC.INS, SC.SIG1, SC.SEN2, SC.CHA2, SC.PAR );   % Unique arguments: SEN2, CHA2
+    [t_bias, Ubias] = isGetDataLite( SC.DBH, SC.CONTENTS(Entry,:), dt, SC.PRO, SC.MEM, SC.INS, SC.SIG1, SC.SEN2, SC.CHA2, SC.PAR );   % Unique arguments: SEN2, CHA2
     
     % The DAC value is set near a sweep
     % Find sweep-type from associated sweep

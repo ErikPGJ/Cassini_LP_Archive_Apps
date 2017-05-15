@@ -142,7 +142,7 @@ if (start_entry <= end_entry)
         % Read density data for one ISDAT time interval.
         try
             [t_tmp, Ne_TM_tmp, t_DAC_tmp, DAC_tmp, U_tmp] = GetDensity(CA,j);
-            ;
+            
         catch
             CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % RE-Connect to ISDAT
             try
