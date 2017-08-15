@@ -1,16 +1,22 @@
-% function for reading data from archived files
-% usage: 
-%   either type Read_LP_Archive and input parameters manually
-%   OR
-%   call by DATA = Read_LP_Archive(datatype, time, query);
+% Function for reading data from archived files.
 %
-%   # datatype is either 'Sweep' or "Density'
+% USAGE
+% =====
+% DATA = Read_LP_Archive(dat_dir, LP_Swp_Clb_dir, Cnt_CurDat_dir)    
+% DATA = Read_LP_Archive(dat_dir, LP_Swp_Clb_dir, Cnt_CurDat_dir, datatype);
+% DATA = Read_LP_Archive(dat_dir, LP_Swp_Clb_dir, Cnt_CurDat_dir, datatype, time);
+% DATA = Read_LP_Archive(dat_dir, LP_Swp_Clb_dir, Cnt_CurDat_dir, datatype, time, query);
+% NOTE: If not all arguments are supplied, then the user will be asked to type in the remaining arguments manually.
 %
-%   # query is either '', 'Rev' or the name of the moon of interest (ex. 'Titan' without quotations)
-%       if left empty, allows to specify arbitrary time intervals, else
-%       asks for specific event(s) to be entered (ex. Rev5, T42, etc)
+% ARGUMENTS
+% =========
+% dat_dir        : Path to directory with *.dat files for various events, flybys, i.e. 'apoapse_times.dat',
+%                  'titan_times.dat' etc.
+% LP_Swp_Clb_dir : Path to directory with LP_archive_*.dat files.
+% Cnt_CurDat_dir : Path to directory with LP_CntCur_*.dat  files.
+% datatype       : Either 'Sweep' or "Density'
 %
-%   # time can be:
+% time : Can be:
 %       -   arbitrary list of time intervals in EPOCH, [YEAR DOY hh mm ss] or [YEAR MM DD hh mm ss]
 %           composed as [start_time end_time] matrix (be consistent!)
 %       -   a list of numbers corresponding to events specified in query
@@ -22,20 +28,48 @@
 %           fly-bys/events and will set default fly-by durations to 2h (1h before and
 %           1h after the closest approach)
 %
-%   # DATA is a structure
-%       .tUI field contains the [epoch U I] of the event
-%       .event contains the name of the event, ex. "interval_#", "Rev#", "T#" etc
+% query : Either '', 'Rev' or the name of the moon of interest (ex. 'Titan' without quotations)
+%         if left empty, allows to specify arbitrary time intervals, else
+%         asks for specific event(s) to be entered (ex. Rev5, T42, etc)
+%
+%
+% RETURN VALUE
+% ============
+%  DATA : A structure with the following fields:
+%       .tUI   : Contains the [epoch U I] of the event
+%       .event : Contains the name of the event, ex. "interval_#", "Rev#", "T#" etc
+%
 %
 % /Oleg Shebanits, IRFU, 2012
+% /Erik P G Johansson, IRFU, 2017-08-15
 
-function DATA = Read_LP_Archive(datatype, time, query)
+function DATA = Read_LP_Archive(dat_dir, LP_Swp_Clb_dir, Cnt_CurDat_dir, datatype, time, query)
+% NOTE: Function contains repetitions that could likely be condensed into smaller, safer code.
+
 DATA = [];
 
-apppath = fileparts([mfilename('fullpath'), '.m']);
-datapath = [apppath(1:end-24), '/Cassini_LP_DATA_Archive/'];
+%apppath = fileparts([mfilename('fullpath'), '.m']);
+%dat_dir = [apppath(1:end-24), '/Cassini_LP_DATA_Archive/'];
 
-% ===== for manual use of the function =====
+
+
+% ARGUMENT CHECKS
+% ---------------
+% Catch some of calls to the function using an old (now obsoleted) function interface.
 if nargin < 3
+    error('Too few arguments. Function always requires the first three paths to be specified. If you want the old function behaviour/interface, use ''Read_LP_Archive_OI'' instead.')
+end
+if ~ischar(LP_Swp_Clb_dir)    % The second argument could be a number in the old interface.
+    error('LP_Swp_Clb_dir is not a string.')
+end
+if ~exist(dat_dir, 'dir') || ~exist(LP_Swp_Clb_dir, 'dir') || ~exist(Cnt_CurDat_dir, 'dir')
+    error('One of the specified paths is not a valid directory.')
+end
+
+
+
+% ===== For manual use of the function =====
+if nargin < 3+3
     query = input('\nIf you require specific data such as fly-by of a moon or whole revolution,\nspecify by the name of the moon (ex. "Titan") or "Rev" (without quotations) for revolution.\nDefault (leave blank) is custom time interval(s)\n\nEnter query: ','s');
     if      ~strcmp(query, '') &&... % if gibberish input (not empty, but doesn't match anything of the following)
             ~strcmp(query, 'Rev') &&... 
@@ -52,16 +86,16 @@ if nargin < 3
     end
 end
 
-if nargin < 1
+if nargin < 3+1
     datatype = input('Data type ("Sweep" or "Density", without quotations)? ', 's');
 end
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 % if arbitrary time interval(s) wanted
 if strcmp(query, '') 
-    if nargin < 2
+    if nargin < 3+2
         start_time = input('Start time? (if several intervals, matrix must have dates/epoch as rows): ');
-        end_time = input('End time? (if several intervals, matrix must have dates/epoch as rows): ');
+        end_time   = input('End time? (if several intervals, matrix must have dates/epoch as rows): ');
         if isequal(size(start_time),size(end_time))
             time = [start_time end_time];
         else
@@ -72,13 +106,13 @@ if strcmp(query, '')
     % checking for input formats of time vectors
     if size(time, 2) == 10 % if entered in [YEAD DOY hh mm ss], convert to epoch
         start_time = toepoch([doy2date(time(:,1), time(:,2)) time(:,3:5)]);
-        end_time = toepoch([doy2date(time(:,6), time(:,7)) time(:,8:10)]);
+        end_time   = toepoch([doy2date(time(:,6), time(:,7)) time(:,8:10)]);
     elseif size(time, 2) == 12 % if entered in [YEAR MM DD hh mm ss], convert to epoch
         start_time = toepoch(time(:,1:6));
-        end_time = toepoch(time(:,7:12));
+        end_time   = toepoch(time(:,7:12));
     elseif size(time, 2) == 2 % if entered in epoch
         start_time = time(:,1);
-        end_time = time(:,2);
+        end_time   = time(:,2);
     else
         % if entered in some other weird way except in epoch
         error('Start time was given in wrong format');
@@ -91,9 +125,9 @@ if strcmp(query, '')
 % if REV data wanted ******* eval(['test = [' sprintf('''T%d'';', [2 5 6]) ']'])
 elseif strcmp(query, 'Rev')
     disp('Rev mode');
-    filename = [datapath, 'apoapse_times.dat'];
+    filename = fullfile(dat_dir, 'apoapse_times.dat');
     timevec = load(filename); % in apoapse_times.dat, first entry is START OF PRIME MISSION and last entry is END OF MISSION
-    if nargin < 2
+    if nargin < 3+2
         time = input('\nRev0, RevA, RevB and RevC are -1, 0, 1, and 2 resp., rest are matching numbers. Last Rev is 293.\n\nSpecify event number(s) of interest: ');
     end
     
@@ -106,7 +140,7 @@ elseif strcmp(query, 'Rev')
     if ~issorted(time, 'rows'), time = sort(time); end
     
     start_time = timevec(time+2,:); % time+2 since Rev3 is actually 5th (after Rev0, RevA, RevB and RevC)
-    end_time = fromepoch(toepoch(timevec(time+3,:)) - 1); % minus one second from the start of next Rev, this works since the last entry is the end of mission, the one before it is the last Rev
+    end_time   = fromepoch(toepoch(timevec(time+3,:)) - 1); % minus one second from the start of next Rev, this works since the last entry is the end of mission, the one before it is the last Rev
     
     clear fieldname
     
@@ -142,16 +176,16 @@ elseif strcmp(query, 'Rev')
 % if TITAN data wanted
 elseif strcmp(query, 'Titan')
     disp('Titan mode');
-    filename = [datapath, 'titan_times.dat'];
+    filename = fullfile(dat_dir, 'titan_times.dat');
     timevec = load(filename);
-    if nargin < 2
+    if nargin < 3+2
         ftime = input('\nTA, TB and TC are 0, 1 and 2 resp., rest are matching numbers.\nLast fly-by is T126.\nEnter fly-by number(s): ');
         duration = input('Enter corresponding fly-by duration(s) (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
-        if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
+        if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors with the same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
     end
     %[m n] = size(time);
@@ -160,13 +194,13 @@ elseif strcmp(query, 'Titan')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [T# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows'), time = sort(time); end
     
     start_time = toepoch(timevec(time(:,1)+1,:)) - time(:,2)/2*3600; % time+1 since T3 fly-by is actually 4th (after TA, TB and TC)
-    end_time = toepoch(timevec(time(:,1)+1,:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1)+1,:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -197,14 +231,14 @@ elseif strcmp(query, 'Titan')
 % if ENCELADUS data wanted
 elseif strcmp(query, 'Enceladus')
     disp('Enceladus mode');
-    filename = [datapath, 'enceladus_times.dat'];
+    filename = fullfile(dat_dir, 'enceladus_times.dat');
     timevec = load(filename);
-    if nargin < 2
-        ftime = input('\nFirst fly-by is E0, Last fly-by is E22.\nEnter fly-by number(s) : ');
+    if nargin < 3+2
+        ftime    = input('\nFirst fly-by is E0, Last fly-by is E22.\nEnter fly-by number(s) : ');
         duration = input('Enter corresponding fly-by duration(s) (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -215,13 +249,13 @@ elseif strcmp(query, 'Enceladus')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [E# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows'), time = sort(time); end
     
     start_time = toepoch(timevec(time(:,1)+1,:)) - time(:,2)/2*3600; % time+1 since E0 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1)+1,:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1)+1,:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -240,14 +274,14 @@ elseif strcmp(query, 'Tethys')
     
     % since Tethys only has ONE fly-by...
     disp('Tethys mode');
-    filename = [datapath, 'tethys_times.dat'];
+    filename = fullfile(dat_dir, 'tethys_times.dat');
     timevec = load(filename);
-    if nargin < 2
+    if nargin < 3+2
         ftime = 1;
         duration = input('Enter Te1 duration (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -258,7 +292,7 @@ elseif strcmp(query, 'Tethys')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [Te# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -266,7 +300,7 @@ elseif strcmp(query, 'Tethys')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since Te1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -284,14 +318,14 @@ elseif strcmp(query, 'Tethys')
 elseif strcmp(query, 'Dione')
     
     disp('Dione mode');
-    filename = [datapath, 'dione_times.dat'];
+    filename = fullfile(dat_dir, 'dione_times.dat');
     timevec = load(filename);
-    if nargin < 2
-        ftime = input('\nFirst fly-by is D1, Last fly-by is D5.\nEnter fly-by number(s) : ');
+    if nargin < 3+2
+        ftime    = input('\nFirst fly-by is D1, Last fly-by is D5.\nEnter fly-by number(s) : ');
         duration = input('Enter corresponding fly-by duration(s) (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -302,7 +336,7 @@ elseif strcmp(query, 'Dione')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [D# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -310,7 +344,7 @@ elseif strcmp(query, 'Dione')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since D1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -328,14 +362,14 @@ elseif strcmp(query, 'Dione')
 elseif strcmp(query, 'Rhea')
     
     disp('Rhea mode');
-    filename = [datapath, 'rhea_times.dat'];
+    filename = fullfile(dat_dir, 'rhea_times.dat');
     timevec = load(filename);
-    if nargin < 2
-        ftime = input('\nFirst fly-by is R1, Last fly-by is R4.\nEnter fly-by number(s) : ');
+    if nargin < 3+2
+        ftime    = input('\nFirst fly-by is R1, Last fly-by is R4.\nEnter fly-by number(s) : ');
         duration = input('Enter corresponding fly-by duration(s) (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -346,7 +380,7 @@ elseif strcmp(query, 'Rhea')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [R# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -354,7 +388,7 @@ elseif strcmp(query, 'Rhea')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since R1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -373,14 +407,14 @@ elseif strcmp(query, 'Mimas')
     
     % since Mimas only has ONE fly-by...
     disp('Mimas mode');
-    filename = [datapath, 'mimas_times.dat'];
+    filename = fullfile(dat_dir, 'mimas_times.dat');
     timevec = load(filename);
-    if nargin < 2
+    if nargin < 3+2
         ftime = 1;
         duration = input('Enter M1 duration (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -391,7 +425,7 @@ elseif strcmp(query, 'Mimas')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [M# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -399,7 +433,7 @@ elseif strcmp(query, 'Mimas')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since M1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -418,14 +452,14 @@ elseif strcmp(query, 'Iapetus')
     
     % since Iapetus only has ONE fly-by...
     disp('Iapetus mode');
-    filename = [datapath, 'iapetus_times.dat'];
+    filename = fullfile(dat_dir, 'iapetus_times.dat');
     timevec = load(filename);
-    if nargin < 2
+    if nargin < 3+2
         ftime = 1;
         duration = input('Enter I1 duration (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -436,7 +470,7 @@ elseif strcmp(query, 'Iapetus')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [I# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -444,7 +478,7 @@ elseif strcmp(query, 'Iapetus')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since I1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -463,14 +497,14 @@ elseif strcmp(query, 'Hyperion')
     
     % since Hyperion only has ONE fly-by...
     disp('Hyperion mode');
-    filename = [datapath, 'hyperion_times.dat'];
+    filename = fullfile(dat_dir, 'hyperion_times.dat');
     timevec = load(filename);
-    if nargin < 2
+    if nargin < 3+2
         ftime = 1;
         duration = input('Enter H1 duration (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -481,7 +515,7 @@ elseif strcmp(query, 'Hyperion')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [H# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -489,7 +523,7 @@ elseif strcmp(query, 'Hyperion')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since H1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -508,14 +542,14 @@ elseif strcmp(query, 'Phoebe')
     
     % since Phoebe only has ONE fly-by...
     disp('Phoebe mode');
-    filename = [datapath, 'phoebe_times.dat'];
+    filename = fullfile(dat_dir, 'phoebe_times.dat');
     timevec = load(filename);
-    if nargin < 2
+    if nargin < 3+2
         ftime = 1;
         duration = input('Enter P1 duration (hours, default is 2h): ');
         if isempty(duration)
             duration = 2*ones(size(ftime));
-            disp('default duration set');
+            disp('Using default duration');
         end
         if ~isequal(size(ftime), size(duration)), error('Fly-by numbers and durations must be vectors of same dimensions'); end
         time(:,1) = ftime; time(:,2) = duration;
@@ -526,7 +560,7 @@ elseif strcmp(query, 'Phoebe')
         duration = 2*ones(size(time));
         time = [];
         time(:,1) = ftime; time(:,2) = duration; % this makes a [P# dur] matrix regardless of ftime dimensions
-        disp('default duration set');
+        disp('Using default duration');
     end
     
     if ~issorted(time,'rows')
@@ -534,7 +568,7 @@ elseif strcmp(query, 'Phoebe')
     end
     
     start_time = toepoch(timevec(time(:,1),:)) - time(:,2)/2*3600; % time since P1 fly-by is actually 1st
-    end_time = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
+    end_time   = toepoch(timevec(time(:,1),:)) + time(:,2)/2*3600;
     
     clear fieldname
     
@@ -555,31 +589,32 @@ end
 
 % @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-% now, the requested event time(s) is/are in start_time and end_time as
-% epoch vectors. next step is to scan the files and find the data
+% Now the requested event time(s) is/are in start_time and end_time as
+% epoch vectors. The next step is to scan the files and find the data.
 
-if strcmp(datatype, 'Sweep'); % string comparison
-    filepath = [datapath, 'LP_Swp_Clb/'];
-    filename = 'LP_archive_'; % followed by YEARDOY.dat
-elseif strcmp(datatype,  'Density'); % string comparison
-    filepath = [datapath, 'Cnt_CurDat/'];
-    filename = 'LP_CntCur_'; % followed by YEARDOY.dat
+if strcmp(datatype, 'Sweep')   % String comparison
+    %file_dir = [dat_dir, 'LP_Swp_Clb/'];
+    file_dir = LP_Swp_Clb_dir;
+    filename_prefix = 'LP_archive_';   % To be followed by YEARDOY.dat.
+elseif strcmp(datatype,  'Density')   % String comparison
+    %file_dir = [dat_dir, 'Cnt_CurDat/'];
+    file_dir = Cnt_CurDat_dir;
+    filename_prefix = 'LP_CntCur_';    % To be followed by YEARDOY.dat.
 else
     disp('Error using Read_LP_Archive: data type can only be "Sweep" or "Density"');
     error('Wrong data type specified during the call to Read_LP_Archive');
 end
 
-dirinfo = dir(filepath);
-s_ind = []; e_ind = [];
+dirinfo = dir(file_dir);
+%s_ind = []; e_ind = [];
 
 s_time = fromepoch(start_time);
 e_time = fromepoch(end_time);
 
-% convert filenumbers to numbers for comparison
-% thelist = [];
+% Convert year+doy in filenames to 7-digit (!) numbers for comparison.
 namenum = [];
 for i = 1:numel(dirinfo)
-    namenum = [namenum; cell2mat(textscan(dirinfo(i).name, [filename '%d.dat']))]; % this contains a list of numbers of all existing files
+    namenum = [namenum; cell2mat(textscan(dirinfo(i).name, [filename_prefix, '%d.dat']))];    % Contains a list of numbers of all existing files.
 end
 
 st = [s_time(:,1).*1000+date2doy(s_time)];
@@ -598,9 +633,10 @@ end
 for i = 1:numel(filelist)
     data = [];
     for k = 1:numel(filelist{i})
-        disp(['Loading ' filepath filename num2str(filelist{i}(k)) '.dat ...'])
-        data = [data; load([filepath filename num2str(filelist{i}(k)) '.dat'])]; % this loads all the files that include the time interval into one variable
-        %data = [data; load([filepath dirinfo(k).name])]; % this loads all the files that include the time interval into one variable
+        file_path = fullfile(file_dir, [filename_prefix, num2str(filelist{i}(k)), '.dat']);
+        disp(['Loading ' file_path '.dat ...'])
+        data = [data; load(file_path)]; % this loads all the files that include the time interval into one variable
+        %data = [data; load([file_dir dirinfo(k).name])]; % this loads all the files that include the time interval into one variable
         disp('Done');
     end
     if ~isempty(data)
@@ -615,11 +651,10 @@ for i = 1:numel(filelist)
     if isempty(DATA(i).tUI), disp(['No data for ' fieldname{i}]); end
 end
 
-if nargout < 1
-    assignin('base', 'DATA', DATA);
-    clear DATA
-end
+%if nargout < 1
+%    assignin('base', 'DATA', DATA);
+%    clear DATA
+%end
 
 return;
 
-    
