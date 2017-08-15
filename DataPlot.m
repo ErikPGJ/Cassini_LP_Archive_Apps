@@ -20,7 +20,7 @@ asklabel = input('Label events? (1 = yes, 0 = no): ');
 for evit = 1:numel(DATA)
     clearvars -except DATA evit query datatype asklabel datapath
     
-    t = DATA(evit).tUI(:,1);
+    t = DATA(evit).tUI(:,1); 
     U = DATA(evit).tUI(:,2);
     I = DATA(evit).tUI(:,3);
     
@@ -155,19 +155,20 @@ for evit = 1:numel(DATA)
         [event_time, ~, i_list] = intersect(timevec(:,1:5), eventlist.data(:,1:5), 'rows');
         
         
-        timevec = toepoch(timevec);
+        timevec = datenum(timevec); % in days
         
         figh = genvarname(sprintf('fig%02d', evit));
         eval([figh '= figure(evit);']);
         eval(['set(' figh ', ''Position'', [100 100 1000 400]);']);
         
+        time_swp = datenum(fromepoch(time_swp));
         sc1 = scatter(time_swp, Uplot, 400/sqrt(length(timevec)), real(log(swp)), 'filled', 'Marker', 's');
-        add_timeaxis;
+        datetick;
         if max(Uplot) > 30
-            axis([min(time_swp)-50 max(time_swp)+50 min(Uplot)-1 max(Uplot)+1]);
+            axis([min(time_swp)-50/86400 max(time_swp)+50/86400 min(Uplot)-1 max(Uplot)+1]);
             mpos = max(Uplot)+2.6;
         else
-            axis([min(time_swp)-50 max(time_swp)+50 min(Uplot)-0.3 max(Uplot)+0.3]);
+            axis([min(time_swp)-50/86400 max(time_swp)+50/86400 min(Uplot)-0.3 max(Uplot)+0.3]);
             mpos = max(Uplot)+0.4;
         end
         
@@ -180,10 +181,10 @@ for evit = 1:numel(DATA)
         
         
         %if strcmp(query,'Rev'), title('32-Volt sweeps'); else title([name ', ' datestr(fromepoch(time_swp(floor(length(time_swp)/2))), 'yyyy-mm-dd')]); end
-        if timevec(end)-timevec(1) >= 84600
-            titlestr = [datestr(fromepoch(timevec(1)),'yyyy-mm-dd HH:MM') ' to ' datestr(fromepoch(timevec(end)),'yyyy-mm-dd HH:MM')];
+        if timevec(end)-timevec(1) >= 1 % 1 day
+            titlestr = [datestr(timevec(1),'yyyy-mm-dd HH:MM') ' to ' datestr(timevec(end),'yyyy-mm-dd HH:MM')];
         else
-            titlestr = datestr(fromepoch(timevec(1)),'yyyy-mm-dd');
+            titlestr = datestr(timevec(1),'yyyy-mm-dd');
         end
         ttl = text(0.7,1.15, titlestr ,'Units','normalized');
         
@@ -204,22 +205,22 @@ for evit = 1:numel(DATA)
         % storing {flyby_number moon} as strings
         t = fromepoch(t);
         [event_time, ~, i_list] = intersect(t(:,1:5), eventlist.data(:,1:5), 'rows');
-        t = toepoch(t);
+        t = datenum(t);
         
         figh = genvarname(sprintf('fig%02d', evit));
         eval([figh '= figure(evit);']);
         eval(['set(' figh ', ''Position'', [100 100 1000 400]);']);
         
         sct=scatter(t,real(log(I)),40,U,'filled','Marker','s');
-        add_timeaxis;
+        datetick;
         cbar = colorbar('YTickLabel', {linspace(min(U),max(U),10)});
         clh = text(0.1,0.1,'{\bf U [V]}', 'Units', 'normalized', 'Position', [1.06 1.03]);
         set(gca, 'Position', [0.07 0.1 0.8 0.75]);
         
-        if t(end)-t(1) >= 84600
-            titlestr = [datestr(fromepoch(t(1)),'yyyy-mm-dd HH:MM') ' to ' datestr(fromepoch(t(end)),'yyyy-mm-dd HH:MM')];
+        if t(end)-t(1) >= 1
+            titlestr = [datestr(t(1),'yyyy-mm-dd HH:MM') ' to ' datestr(t(end),'yyyy-mm-dd HH:MM')];
         else
-            titlestr = datestr(fromepoch(t(1)),'yyyy-mm-dd');
+            titlestr = datestr(t(1),'yyyy-mm-dd');
         end
         ttl = text(0.7,1.15, titlestr ,'Units','normalized');
         
@@ -244,7 +245,7 @@ for evit = 1:numel(DATA)
     
     if asklabel
         for i = 1:size(event_time,1)
-            text(toepoch([event_time(i,:) 0]), mpos, [eventlist.textdata{i_list(i)+1,1} sprintf('\n|') num2str(eventlist.data(i_list(i),7)) eventlist.textdata{i_list(i)+1,3}], 'FontSize', 10, 'FontWeight', 'bold');
+            text(datenum([event_time(i,:) 0]), mpos, [eventlist.textdata{i_list(i)+1,1} sprintf('\n|') num2str(eventlist.data(i_list(i),7)) eventlist.textdata{i_list(i)+1,3}], 'FontSize', 10, 'FontWeight', 'bold');
         end
     end
     
