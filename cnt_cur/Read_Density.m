@@ -1,6 +1,8 @@
 % Function for reading density data manually
 %
-% Usage: [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time);
+% USAGE
+% =====
+% [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time);
 %
 % RETURN VALUES
 % =============
@@ -11,6 +13,9 @@
 %
 % Time should be in either epoch or in format of [yyyy mm dd hh mm ss].
 % Default S/C is Cassini.
+%
+%
+% NOTE: Writes Cnt_CurDat/spikelog.mat (creates or appends).
 %
 % Based on Process.m by Jan-Erik Wahlund (original in the ../cnt_cur_draft folder)
 % Oleg Shebanits, 2012-02

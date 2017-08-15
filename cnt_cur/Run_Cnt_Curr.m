@@ -1,10 +1,22 @@
 %
 % LP Continuous Current extraction and archiving for Cassini
+% NOTE: Writes Cnt_CurDat/spikelog.mat (creates or appends) via "Read_Density".
 %
-% ARGUMENTS: [t_start_incl  t_end_excl]  (optional)
-%  
+%
+% USAGE
+% =====
+% Run_Cnt_Curr
+% Run_Cnt_Curr(t_start_incl, t_end_excl)
+%
+% 
+% ARGUMENTS
+% =========
+% t_start_incl : Start date, inclusive.
+% t_end_excl   : Stop date, exclusive.
+%
 %
 % NOTE: Not called from anywhere.
+%
 % PROPOSAL: Rewrite as function without any user interaction or move user interaction to wrapper script.
 %    NOTE: There is user interaction when finding intervals longer than ~1 h.
 function Run_Cnt_Curr(varargin)

@@ -6,6 +6,8 @@
 % All values are given with 6 significant digits, delimiter is TAB,
 % filename is /Cassini_LP_DATA_Archive/LP_Swp_Clb/LP_archive_YYYYDOY.dat
 %
+% NOTE: Writes Cnt_CurDat/spikelog.mat (creates or appends) via "Read_Sweep".
+%
 % Oleg Shebanits, IRFU, 2012-03
 %
 %
