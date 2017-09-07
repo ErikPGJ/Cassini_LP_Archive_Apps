@@ -39,21 +39,22 @@ function [t,U,I] = Read_Sweep(time,DBH, CONTENTS, DURATION)
   
   if isempty(CONTENTS) || isempty(DURATION)
       [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
-      if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-          warning('WARNING! Found DURATION > 1h10m!');
-          disp('Date (CONTENTS)         DURATION');
-          disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
-          check = input('Proceed? Y/N [N]: ','s');
-          if isempty(check) || check == 'N'
-              disp('Aborted by user');
-              return;
-          end
-          if check == 'Y'
-              disp('cutting out anomaly in DURATION and CONTENTS');
-              CONTENTS(DURATION > 7200,:) = [];
-              DURATION(DURATION > 7200) = [];
-          end
-      end
+%       if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%           warning('WARNING! Found DURATION > 1h10m!');
+%           disp('Date (CONTENTS)         DURATION');
+%           disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
+%           check = input('Proceed? Y/N [N]: ','s');
+%           if isempty(check) || check == 'N'
+%               disp('Aborted by user');
+%               return;
+%           end
+%           if check == 'Y'
+%               disp('cutting out anomaly in DURATION and CONTENTS');
+%               CONTENTS(DURATION > 7200,:) = [];
+%               DURATION(DURATION > 7200) = [];
+%           end
+%       end
+      [CONTENTS, DURATION] = check_DURATION(CONTENTS, DURATION, 'interactive');
   end
   
 datapath = '../../Cassini_LP_DATA_Archive/';  

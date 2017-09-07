@@ -2,10 +2,12 @@
 % Interprets vector on form [YEAR DOY] or [YEAR DAY MONTH].
 % NOTE: No argument check other than size of vector.
 %
+%
 % ARGUMENTS AND RETURN VALUE
 % ==========================
 % input time : 
 % time_spec  : [YEAR MONTH DAY 0 0 0], i.e. BEGINNING OF DAY.
+%
 %
 % Created by Erik P G Johansson, IRF Uppsala, Sweden 2016-01-26
 % (Code reorganized into separate function to avoid duplicating code.)

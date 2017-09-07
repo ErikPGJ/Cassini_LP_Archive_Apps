@@ -11,13 +11,32 @@
 % Oleg Shebanits, IRFU, 2012-03
 %
 %
-% ARGUMENTS: [t_start_incl t_end_excl]  (optional)
+% USAGE
+% =====
+% Run_LP_Archi
+% Run_LP_Archi(t_start_incl, t_end_excl)
+%
+%
+% ARGUMENTS
+% =========
+% t_start_incl : Start date, inclusive.
+% t_end_excl   : Stop date, exclusive.
 %  
 function Run_LP_Archi(varargin)
 
-    % Measured speed from generating 2015-91 to 2015-181.
-    ESTIMATED_WALL_TIME_PER_DATA_TIME = 8.4/86400;   % Used for predicting (and displaying) the wall time used by the function.
+    global datapath apppath
+    datapath = '../../Cassini_LP_DATA_Archive/';
+    apppath  = '../../Cassini_LP_Archive_Apps/';
     
+    % Measured speed from generating 2015-91 to 2015-181.
+    ESTIMATED_WALL_TIME_PER_DATA_TIME = 8.4/86400;   % Used for predicting (and displaying) the wall time used by the function.   % NOTE: Does not consider leap seconds.
+    %NODATA_LOG_FILE = fullfile(apppath, 'cnt_cur', 'nodata_log.dat');
+    %DATA_FILE_PATH_PATTERN = fullfile(datapath, 'Cnt_CurDat', 'LP_CntCur_%4d%03d.dat');
+    NODATA_LOG_FILE        = fullfile(apppath, 'archi', 'nodata_log.dat');
+    DATA_FILE_PATH_PATTERN = fullfile(datapath, 'LP_Swp_Clb', 'LP_archive_%4d%03d.dat');
+
+
+
     if length(varargin) == 0
         disp('Cassini/RPWS/LP data archiver');
         disp('Enter start and end dates for data you wish to archive');
@@ -32,10 +51,6 @@ function Run_LP_Archi(varargin)
         error('Illegal number of arguments')
     end
 
-    global datapath apppath
-    datapath = '../../Cassini_LP_DATA_Archive/';
-    apppath  = '../../Cassini_LP_Archive_Apps/';
-    
     % ~ASSERTIONS
     if ~exist(datapath, 'dir') || ~exist(apppath, 'dir')
         datapath
@@ -81,7 +96,7 @@ function Run_LP_Archi(varargin)
     ss = mod(estimated_walltime_exec_s, 60);
     mm = mod(estimated_walltime_exec_s-ss, 3600)/60;
     hh = floor(estimated_walltime_exec_s/3600);
-    sprintf('%g days interval given.\nEstimated execution time: up to %d:%02d:%02d', total_time_s/86400, hh, mm, ss)
+    sprintf('%g days interval given.\nEstimated execution time: up to %d:%02d:%02d', total_time_s/86400, hh, mm, ss)   % NOTE: Does not consider leap seconds, but also not important.
     % yesno = input('Enter to continue, write anything to abort', 's');
     % if ~isempty(yesno)
     %     return;
@@ -95,34 +110,34 @@ function Run_LP_Archi(varargin)
     end
     [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
 
-    if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-        warning('WARNING! Found DURATION > 1h10m!');
-        disp('Date (CONTENTS)         DURATION');
-        disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
-        check = input('Proceed? Y/N [N]: ','s');
-        if isempty(check) || check == 'N'
-            disp('Aborted by user');
-            return;
-        end
-        if check == 'Y'
-            disp('Cutting out anomaly in DURATION and CONTENTS');
-            CONTENTS(DURATION > 7200,:) = [];
-            DURATION(DURATION > 7200) = [];
-        end
-    end
-
+%     if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%         warning('WARNING! Found DURATION > 1h10m!');
+%         disp('Date (CONTENTS)         DURATION');
+%         disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
+%         check = input('Proceed? Y/N [N]: ','s');
+%         if isempty(check) || check == 'N'
+%             disp('Aborted by user');
+%             return;
+%         end
+%         if check == 'Y'
+%             disp('Cutting out anomaly in DURATION and CONTENTS');
+%             CONTENTS(DURATION > 7200,:) = [];
+%             DURATION(DURATION > 7200) = [];
+%         end
+%     end
+    [CONTENTS, DURATION] = check_DURATION(CONTENTS, DURATION, 'interactive');
 
 
     % Create a vector containing the beginning of every requested day.
     % NOTE: Subtracts 86400 to exclude specified end day.
-    days_requested = toepoch(start_time):86400:(toepoch(end_time)-86400);  
+    days_requested = toepoch(start_time):86400:(toepoch(end_time)-86400);     % NOTE: Does not consider leap seconds.
     days_requested = fromepoch(days_requested);
     
     % Select the requested days from the data in CONTENTS.
     % NOTE: This will eliminate requested days for which there is no data.    
     % Produces list of days on format: [year, month, day, 0, 0, 0].
     days_requested_available = intersect(CONTENTS(:,1:3), days_requested(:,1:3), 'rows');   % Find days existing in CONTENTS. 
-    [N_days N_time_fields] = size(days_requested_available);   % N_days = days with data, not number of requested days (I think).
+    [N_days, N_time_fields] = size(days_requested_available);   % N_days = days with data, not number of requested days (I think).
     days_requested_available = [days_requested_available zeros(N_days,N_time_fields)];
     %clear N_time_fields     % Seems unnecessary. Remove when sure that only functions, and no scripts, are called afterwards.
 
@@ -136,10 +151,10 @@ function Run_LP_Archi(varargin)
     for i = 1:N_days
         % run sweep reading function to calibrate and fix mismatches
         t_day_begin = days_requested_available(i,:);                            % Beginning of the day.
-        t_day_end = fromepoch(toepoch(days_requested_available(i,:)) + 86400);  % End of the day (next day 00:00:00).
+        t_day_end = fromepoch(toepoch(days_requested_available(i,:)) + 86400);  % End of the day (next day 00:00:00).   % NOTE: Does not consider leap seconds.
         [t_sweep, U_sweep, I_sweep] = Read_Sweep([t_day_begin; t_day_end], DBH, CONTENTS, DURATION);
         if ~isempty(t_sweep)
-            filename = [datapath, sprintf('LP_Swp_Clb/LP_archive_%4d%03d.dat', t_day_begin(1), date2doy(t_day_begin(1:3)))];
+            filename = sprintf(DATA_FILE_PATH_PATTERN, t_day_begin(1), date2doy(t_day_begin(1:3)));
             %         if exist(filename, 'file') == 2
             %             % ovwrt = input('File exists, overwrite? (Enter = Yes/N = no) ');
             %             if 1 %~isempty(ovwrt)
@@ -155,17 +170,17 @@ function Run_LP_Archi(varargin)
             %data_log = [data_log; t_day_begin];
             disp(['Done. File size: ', num2str(file_size), ' MiB']);
         else
-            disp(['No data from ' datestr(t_day_begin, 'yyyy-mm-dd') ' skipping']);
+            disp(['No data from ' datestr(t_day_begin, 'yyyy-mm-dd') '; skipping']);
             nodata_log = [nodata_log; t_day_begin];
-            if exist([apppath, 'archi/nodata_log.dat'], 'file') == 2
-                nodata = load([apppath, 'archi/nodata_log.dat']);
+            if exist(NODATA_LOG_FILE, 'file') == 2
+                nodata = load(NODATA_LOG_FILE);
                 % if file exists, check whether the data-free day is already on the list
                 if isempty(find(toepoch(t_day_begin) == nodata, 1))
-                    fid3 = fopen([apppath, 'archi/nodata_log.dat'], 'a'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', t_day_begin); fclose(fid3);
+                    fid3 = fopen(NODATA_LOG_FILE, 'a'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', t_day_begin); fclose(fid3);
                 end
             else
                 % if file does not exist, create
-                fid3 = fopen([apppath, 'archi/nodata_log.dat'], 'w'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', t_day_begin); fclose(fid3);
+                fid3 = fopen(NODATA_LOG_FILE, 'w'); fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', t_day_begin); fclose(fid3);
             end
         end
         

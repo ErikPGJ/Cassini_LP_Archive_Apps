@@ -28,6 +28,8 @@ function [start, dur] = isGetContentLiteWrapper( varargin )
 %   PRO: Shortens (removes duplication) and clarifies code.
 %   NOTE: Original code (Run_LP_Archi.m) asks user for action. Can/should not keep.
 %
+% PROPOSAL: Call to "check_DURATION" here (not "GetContents")? Could possibly replace many (all?) calls to "check_DURATION" and equivalent code?
+%
 
     [start, dur] = isGetContentLite(varargin{:});
     

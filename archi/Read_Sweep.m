@@ -56,22 +56,8 @@ if DBH == 0, disp([DBH_name,':',DBH_port,' does not respond.']), return, end
 
 if isempty(CONTENTS) || isempty(DURATION)
     error('Argument CONTENTS or DURATION is empty')
-%     [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
-%     if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-%         warning('WARNING! Found DURATION > 1h10m!');
-%         disp('Date (CONTENTS)         DURATION');
-%         disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
-%         check = input('Proceed? Y/N [N]: ','s');
-%         if isempty(check) || check == 'N'
-%             disp('Aborted by user');
-%             return;
-%         end
-%         if check == 'Y'
-%             disp('cutting out anomaly in DURATION and CONTENTS');
-%             CONTENTS(DURATION > 7200,:) = [];
-%             DURATION(DURATION > 7200) = [];
-%         end
-%     end
+%    [CONTENTS,DURATION] = isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');
+%    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');    
 end
 
 % ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  == =
@@ -110,7 +96,7 @@ if isempty(block)
     % TEMPORARY(?) ERROR CHECK.
     % Throw explicit error message for this since the following command will throw a less comprehensible error otherwise.
     % NOTE: toepoch refers to @spis:/usr/local/isdat/clients/APIs/matlab/matlib/toepoch.m which should probably not be
-    % modified unilaterally.
+    % modified unilaterally. Should use irfu-matlab equivalent instead?!!
     error('There is not enough data to analyze.')
 end
 checkcont = toepoch(CONTENTS(block, :));

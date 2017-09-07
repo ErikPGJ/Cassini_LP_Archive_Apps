@@ -1,6 +1,6 @@
 function SC=Setup_Cassini()
 
-% Space Craft structure for Cassini with all info needed
+% Spacecraft structure for Cassini with all info needed
 SC=[];            
 SC.DBH        = 0;                 % ISDAT data base handler
 SC.DBH_Name   = 'titan.irfu.se';   % ISDAT host server
@@ -18,7 +18,7 @@ SC.SEN4       = 'Lp DAC';          % 4 sensor name
 SC.CHA1       = '';                % 1 channel name
 SC.CHA2       = '';                % 2 channel name
 SC.PAR        = '';                % parameter name
-SC.R_SC       = 1.0;               % Radius space craft  
+SC.R_SC       = 1.0;               % Radius spacecraft  
 SC.RP         = 0.025;             % Radius of spherical Langmuir Probe.
 SC.SW_MAX     =  34;               % Max sweep bias
 SC.SW_MIN     = -34;               % Min sweep bias

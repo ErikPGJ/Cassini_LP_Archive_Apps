@@ -3,22 +3,23 @@ time = toepoch([doy2date(time(1),time(2)) 0 0 0]);
 
 DBH=Connect2DBH('titan.irfu.se',33); % Connect to ISDAT
 [CONTENTS,DURATION]=isGetContentLiteWrapper(DBH,'Cassini','','lp','','','','');; % Get full contents list
-if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-    warning('WARNING! Found DURATION > 1h10m!');
-    disp('Date (CONTENTS)         DURATION');
-    disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
-    check = input('Proceed? Y/N [N]: ','s');
-    if isempty(check) || check == 'N'
-        disp('Aborted by user');
-        return;
-    end
-    if check == 'Y'
-        disp('cutting out anomaly in DURATION and CONTENTS');
-        CONTENTS(DURATION > 7200,:) = [];
-        DURATION(DURATION > 7200) = [];
-    end
-end
 
+% if ~isempty(DURATION(DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%     warning('WARNING! Found DURATION > 1h10m!');
+%     disp('Date (CONTENTS)         DURATION');
+%     disp([datestr(CONTENTS(DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(DURATION(DURATION > 7200))]);
+%     check = input('Proceed? Y/N [N]: ','s');
+%     if isempty(check) || check == 'N'
+%         disp('Aborted by user');
+%         return;
+%     end
+%     if check == 'Y'
+%         disp('cutting out anomaly in DURATION and CONTENTS');
+%         CONTENTS(DURATION > 7200,:) = [];
+%         DURATION(DURATION > 7200) = [];
+%     end
+% end
+[CONTENTS, DURATION] = check_DURATION(CONTENTS, DURATION, 'interactive');
 
 
 t_sweep = []; U_sweep = []; I_sweep = [];

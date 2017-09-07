@@ -4,21 +4,23 @@ time = toepoch([doy2date(time(1),time(2)) 0 0 0]);
 CA = Setup_Cassini;
 CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % Connect to ISDAT
 [CA.CONTENTS,CA.DURATION]=GetContents(CA); % Get full contents list
-if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-    warning('WARNING! Found DURATION > 1h10m!');
-    disp('Date (CONTENTS)         DURATION');
-    disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(CA.DURATION(CA.DURATION > 7200))]);
-    check = input('Proceed? Y/N [N]: ','s');
-    if isempty(check) || check == 'N'
-        disp('Aborted by user');
-        return;
-    end
-    if check == 'Y'
-        disp('cutting out anomaly in DURATION and CONTENTS');
-        CA.CONTENTS(CA.DURATION > 7200,:) = [];
-        CA.DURATION(CA.DURATION > 7200) = [];
-    end
-end
+
+% if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%     warning('WARNING! Found DURATION > 1h10m!');
+%     disp('Date (CONTENTS)         DURATION');
+%     disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(CA.DURATION(CA.DURATION > 7200))]);
+%     check = input('Proceed? Y/N [N]: ','s');
+%     if isempty(check) || check == 'N'
+%         disp('Aborted by user');
+%         return;
+%     end
+%     if check == 'Y'
+%         disp('cutting out anomaly in DURATION and CONTENTS');
+%         CA.CONTENTS(CA.DURATION > 7200,:) = [];
+%         CA.DURATION(CA.DURATION > 7200) = [];
+%     end
+% end
+[CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');
 
 t_Ne = []; U_DAC = []; Ne_I = [];
 for h = 0:3600:82800

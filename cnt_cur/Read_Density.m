@@ -1,8 +1,17 @@
 % Function for reading density data manually
 %
+%
 % USAGE
 % =====
 % [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time);
+%
+%
+% ARGUMENTS
+% =========
+% CA         : Standardized structure, "Spacecraft structure". See "Setup_Cassini.m".
+% start_time : Scalar seconds since 1970 (toepoch return value) or time vector [YYYY MM DD hh mm ss].
+% end_time   : Scalar seconds since 1970 (toepoch return value) or time vector [YYYY MM DD hh mm ss].
+%
 %
 % RETURN VALUES
 % =============
@@ -34,23 +43,25 @@ global datapath
 %===========================================================
 if nargin<1
     CA = Setup_Cassini;
-    CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % Connect to ISDAT
-    [CA.CONTENTS,CA.DURATION]=GetContents(CA); % Get full contents list    
-    if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-        warning('WARNING! Found DURATION > 1h10m!');
-        disp('Date (CONTENTS)         DURATION');
-        disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(CA.DURATION(CA.DURATION > 7200))]);
-        check = input('Proceed? Y/N [N]: ','s');
-        if isempty(check) || check == 'N'
-            disp('Aborted by user');
-            return;
-        end
-        if check == 'Y'
-            disp('cutting out anomaly in DURATION and CONTENTS');
-            CA.CONTENTS(CA.DURATION > 7200,:) = [];
-            CA.DURATION(CA.DURATION > 7200) = [];
-        end
-    end
+    CA.DBH = Connect2DBH(CA.DBH_Name,CA.DBH_Ports);   % Connect to ISDAT
+    [CA.CONTENTS,CA.DURATION] = GetContents(CA);      % Get full contents list
+     
+%     if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%         warning('WARNING! Found DURATION > 1h10m!');
+%         disp('Date (CONTENTS)         DURATION');
+%         disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(CA.DURATION(CA.DURATION > 7200))]);
+%         check = input('Proceed? Y/N [N]: ','s');
+%         if isempty(check) || check == 'N'
+%             disp('Aborted by user');
+%             return;
+%         end
+%         if check == 'Y'
+%             disp('cutting out anomaly in DURATION and CONTENTS');
+%             CA.CONTENTS(CA.DURATION > 7200,:) = [];
+%             CA.DURATION(CA.DURATION > 7200) = [];
+%         end
+%     end
+    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');    
 
 end
 if nargin<2
@@ -69,21 +80,23 @@ end
 if isempty(CA.CONTENTS) || isempty(CA.DURATION)
     % NOTE: The below section seems to be a copy of code further up.
     [CA.CONTENTS,CA.DURATION]=GetContents(CA); % Get full contents list
-    if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
-        warning('WARNING! Found DURATION > 1h10m!');
-        disp('Date (CONTENTS)         DURATION');
-        disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(CA.DURATION(CA.DURATION > 7200))]);
-        check = input('Proceed? Y/N [N]: ','s');
-        if isempty(check) || check == 'N'
-            disp('Aborted by user');
-            return;
-        end
-        if check == 'Y'
-            disp('cutting out anomaly in DURATION and CONTENTS');
-            CA.CONTENTS(CA.DURATION > 7200,:) = [];
-            CA.DURATION(CA.DURATION > 7200) = [];
-        end
-    end
+    
+%     if ~isempty(CA.DURATION(CA.DURATION > 7200)) % check DURATION for anomalies (should not be larger than 3600s)
+%         warning('WARNING! Found DURATION > 1h10m!');
+%         disp('Date (CONTENTS)         DURATION');
+%         disp([datestr(CA.CONTENTS(CA.DURATION > 7200,:), 'yyyy-mm-dd HH:MM:SS') '     ' num2str(CA.DURATION(CA.DURATION > 7200))]);
+%         check = input('Proceed? Y/N [N]: ','s');
+%         if isempty(check) || check == 'N'
+%             disp('Aborted by user');
+%             return;
+%         end
+%         if check == 'Y'
+%             disp('cutting out anomaly in DURATION and CONTENTS');
+%             CA.CONTENTS(CA.DURATION > 7200,:) = [];
+%             CA.DURATION(CA.DURATION > 7200) = [];
+%         end
+%     end
+    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');
 end
 
 
@@ -99,8 +112,8 @@ end
 
 
 %=======================================================================================================================
-% Find the EARLIEST time interval that BEGINS AFTER  start_time (??!!!)
-% Find the LATEST   time interval that BEGINS BEFORE end_time.
+% Find the EARLIEST ISDAT time interval "start_entry" that BEGINS AFTER  start_time
+% Find the LATEST   ISDAT time interval "end_entry"   that BEGINS BEFORE end_time.
 % 
 % (Assuming all time intervals are non-overlapping and consecutive, finds those full intervals that lie in the interval
 % start_time--end_time.)
@@ -114,7 +127,7 @@ end_ind     = find( end_time < toepoch(CA.CONTENTS) );
 if (~isempty(end_ind))
     end_entry = end_ind(1) - 1;
 else
-    end_entry = start_ind( length(start_ind) );
+    end_entry = start_ind( end );
 end
 
 if (start_entry <= end_entry)

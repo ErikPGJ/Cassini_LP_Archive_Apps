@@ -39,12 +39,12 @@ function [I_cal] = CalLP_Cassini( tm_data );
   [tm_s, ind_s] = sort( tm_t );
   I_s           = I_t( ind_s );
 
-% tm_s must be STRICT monotonic ! Costed me 2 hours work. :-(
+% tm_s must be STRICT monotonic ! Cost me 2 hours work. :-(
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   for i = 1:length( tm_s )
       ind_s = find( tm_s == tm_s(i) );
       if length( ind_s ) > 1
-         if tm_s(i+1) < 2097.5
+         if tm_s(i+1) < 2097.5                      % NOTE: Magic number. Meaning?
      	    tm_s(i+1) = tm_s(i+1) + 0.1;
          else
      	    tm_s(i+1) = tm_s(i+1) - 0.1;
