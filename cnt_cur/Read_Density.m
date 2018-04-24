@@ -29,7 +29,8 @@
 % Based on Process.m by Jan-Erik Wahlund (original in the ../cnt_cur_draft folder)
 % Oleg Shebanits, 2012-02
 %
-function [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time)
+%function [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time)
+function [t_Ne U_DAC Ne_I TM_values] = Read_Density(CA, start_time, end_time)
 %
 % PROPOSAL: Merge two identical occurrences of ~isempty(CA.DURATION(CA.DURATION > 7200))...end into separate function.
 %
@@ -226,7 +227,11 @@ if (start_entry <= end_entry)
         DAC   = DAC_new;
         t_DAC = t_DAC_new;
     end
-    
+
+    TM_values.DAC_U = U;
+    TM_values.t_DAC = t_DAC;
+    TM_values.DAC_TM = DAC;
+
     %================================================================
     % Take away some bad initial I data samples in each DAC segment.
     %================================================================
@@ -274,16 +279,40 @@ if (start_entry <= end_entry)
     % Only the "beginning" of a time interval has a DAC,
     % need to fill out a DAC for each I value!
     [c int_e ~] = intersect(t, t_DAC);
+    disp([length(c) length(t_DAC)])
     if ~isempty(c)
-        
-        
-        int_s = int_e;
-        int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
+
+	% DAC/Current blocks are not one to one sometimes (especially finale orbits)
+	if length(c) ~= length(t_DAC)
+           int_s = []; int_e = [];
+           for ii=1:length(t_DAC)-1
+               ind = find(t>=t_DAC(ii));   int_s = [int_s   ind(1) ];
+               ind = find(t< t_DAC(ii+1)); int_e = [int_e   ind(end) ];
+           end
+           ind = find(t>=t_DAC(end));
+           if ~isempty(ind)
+                int_s = [int_s   ind(1) ];
+                int_e = [int_e length(t)];
+           end
+        else
+           int_s = int_e;
+           int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
+        end
+
         DAC_temp = NaN*ones(length(I),1); % pre-allocating for speed and convenience
         for k = 1:length(c)
             DAC_temp(int_s(k):int_e(k)-1) = U(k);
         end
-        
+
+	%----- The current without 20Hz filter seems to be flipping the sign
+	dt = diff([t(int_s) t(int_s+1)],1,2);
+        Iflp_blk = find(dt>0.90);
+  	%keyboard
+        p_Iflp = [];
+        for ii=1:length(Iflp_blk)
+            p_Iflp = [p_Iflp int_s(Iflp_blk(ii)):int_e(Iflp_blk(ii))];
+        end
+        I(p_Iflp) = -I(p_Iflp);
         
         I(1:int_s(1)-1) = []; % remove values of I before U is set
         DAC_temp(1:int_s(1)-1) = [];
