@@ -38,7 +38,7 @@ function [start, dur] = isGetContentLiteWrapper( varargin )
     % ISDAT returns a faulty duration value and claims that there is a "data period" for
     % 2017-01-23 17:00:00.2--17:02:46.7 when it really is ~1 h as usual.
     % Therefore replaces that faulty value.
-    i = find(   (start(:,1) == 2017) & (start(:,2)==1) & (start(:,3)==23) & (start(:,4)==17) & (start(:,5)==0)  );   % NOTE: Does not check for the "seconds" value.
+    i = find(ismember(start(:, 1:5), [2017, 1, 23, 17, 0], 'rows'));   % NOTE: Does not check for the "seconds" value.
     if ~isempty(i)
         warning('Correcting for ISDAT DURATION value bug.')
         dur(i) = 3600-0.023;    % Approximate value from inspecting the start value after.
@@ -67,4 +67,31 @@ function [start, dur] = isGetContentLiteWrapper( varargin )
         dur(i) = 3600-0.01;    % Approximate EXPECTED value.
     end
 
+    
+    
+    % Deal with ISDAT bug which causes calls for ISDAT data to fail for certain longer time
+    % intervals (possiblyall time intervals which include certain samples).
+    % 
+    % NOTE: Does not check for the "seconds" value.
+    [start, dur] = split_ISDAT_interval_2(start, dur, [2016, 12, 11, 20, 0], 60);
+    [start, dur] = split_ISDAT_interval_2(start, dur, [2016, 12, 11, 21, 0], 60);
+    [start, dur] = split_ISDAT_interval_2(start, dur, [2016, 12, 11, 22, 0], 60);
+end
+
+
+
+% NOTE: start_0 must not have all six fields.
+function [start, dur] = split_ISDAT_interval_2(start, dur, start_0, N)
+% PROPOSAL: Handle start_0 with multiple rows (to speed up code)?!!
+
+    n = length(start_0);
+    i = find(ismember(start(:, 1:n), start_0, 'rows'));
+    
+    if numel(i) == 1
+        [start, dur] = split_ISDAT_interval(start, dur, i, N);
+    elseif numel(i) == 0
+        ;    % Do nothing
+    else
+        error('Found multiple matching ISDAT time intervals.')
+    end
 end
