@@ -1,8 +1,10 @@
 function doy = date2doy(day)
-%date2doy
-%usage: doy = date2doy(day)
+% date2doy
+%
+% usage: doy = date2doy(day)
 %   format day:[year month date]
-% (c) Michiko
+%
+% (c) Michiko Morooka
 % last update: Aug. 2006
 
 % = Check input parameters.==========================================

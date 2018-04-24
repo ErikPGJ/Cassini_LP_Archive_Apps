@@ -17,14 +17,17 @@
 %
 % NOTE: Can not called from any directory.
 % NOTE: Appears to be able to handle non-1-hour ISDAT time intervals, assuming they still do not span midnight.
+% NOTE: Fails if there is no data for an entire UTC day.
 %
 % BUG: Adds dates to nodata_log file for dates for which there is not data, but does not remove dates for which there is
 % data.
 %
+function Run_Cnt_Curr(varargin)
 % PROPOSAL: Rewrite as function without any user interaction or move user interaction to wrapper script.
 %    NOTE: There is user interaction when finding intervals longer than ~2 h.
 % PROPOSAL: Optional flag for disabling long DURATION warning.
-function Run_Cnt_Curr(varargin)
+
+
 
 % Should not use "clear all" since it clears breakpoints in OTHER FILES, but NOT IN THIS FILE.
 clear VARIABLES
@@ -36,7 +39,7 @@ Constants; % Some constants
 global datapath apppath
 datapath = '../../Cassini_LP_DATA_Archive/';
 apppath  = '../../Cassini_LP_Archive_Apps/';
-NODATA_LOG_FILE        = fullfile(apppath, 'cnt_cur', 'nodata_log.dat');
+NODATA_LOG_FILE        = fullfile(apppath,  'cnt_cur',    'nodata_log.dat');
 DATA_FILE_PATH_PATTERN = fullfile(datapath, 'Cnt_CurDat', 'LP_CntCur_%4d%03d.dat');
 
 
@@ -53,35 +56,38 @@ if ~strcmp([baseName,ext], 'cnt_cur')
 end
 
 
+
 Analyse='Cassini';
 if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     if(~exist('CA'))    % Setup if not already done
         CA=Setup_Cassini;    % Setup spacecraft structure for Cassini
     end
-    
+
     if length(varargin) == 0    
         disp('Process Cassini');
         disp('Cassini/RPWS/LP data archiver');
         disp('Enter start (INCLUSIVE) and end (EXCLUSIVE) dates for data you wish to archive');
         disp('Format: [YYYY MM DD] or [YYYY DOY] (no hh mm ss)');
         disp('NOTE: if error, check if date interval begins OR ends when there is no data.');
-        t_start = input('Start date (INclusive): ');
-        t_end   = input('End date   (EXclusive): ');
+        modifTimeVectorBeginIncl = input('Start date (INclusive): ');
+        modifTimeVectorEndExcl   = input('End date   (EXclusive): ');
     elseif length(varargin) == 2
-        t_start = varargin{1};
-        t_end   = varargin{2};
+        modifTimeVectorBeginIncl = varargin{1};
+        modifTimeVectorEndExcl   = varargin{2};
     else
         error('Illegal number of arguments.')
     end
     nodata_log = [];
-    
-    t_start = interpret_user_input_day(t_start);
-    t_end   = interpret_user_input_day(t_end);
-    N_days = (toepoch(t_end) - toepoch(t_start)) / 86400;   % NOTE: Does not consider leap seconds.
-    
-    
-    
-    time = toepoch(t_start);
+
+    timeVecBeginIncl = interpret_user_input_day(modifTimeVectorBeginIncl);
+    timeVecEndExcl   = interpret_user_input_day(modifTimeVectorEndExcl);
+    epochBeginIncl   = toepoch(timeVecBeginIncl);
+    epochEndExcl     = toepoch(timeVecEndExcl);    
+    N_days = (epochEndExcl - epochBeginIncl) / 86400;   % NOTE: Does not consider leap seconds.
+
+
+
+    epochTime = epochBeginIncl;
     if(CA.DBH==0) % Only reconnect if not connected
         CA.DBH=Connect2DBH(CA.DBH_Name,CA.DBH_Ports); % Connect to ISDAT
     end
@@ -108,7 +114,8 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
 %             CA.DURATION(CA.DURATION > DURATION_WARNING_LIMIT) = [];
 %         end
 %     end
-    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');
+    %[CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');
+    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'non-interactive; permit long durations');
     %if ~isempty(CA.DURATION(CA.DURATION < 0)) % Check DURATION for anomalies (should not be larger than 3600s)
     %    warning('WARNING! Found intervals with negative length.')
     %end
@@ -120,7 +127,7 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
     %==================================================
     % Iterate over days : Obtain data and save to file
     %==================================================
-    while time < toepoch(t_end)   % Time is increased by one day at the end of the loop.
+    while epochTime < epochEndExcl   % Time is increased by one day at the end of the loop.
         
         if(CA.DBH ~= 0) % If we are connected to ISDAT
             
@@ -129,7 +136,7 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
             %
             % This is the data that will actually be written to file.
             %========================================================
-            [t_Ne U_DAC Ne_I] = Read_Density(CA, time, time+86400);   % NOTE: Does not consider leap seconds.
+            [t_Ne U_DAC Ne_I] = Read_Density(CA, epochTime, epochTime+86400);   % NOTE: Does not consider leap seconds.
             
             
             
@@ -139,25 +146,25 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
                 %
                 % Add the date to nodata_log.dat.
                 %================================
-                disp(['No data from day ' datestr(fromepoch(time), 'yyyy-mm-dd')]);
-                nodata_log = [nodata_log; time];
+                disp(['No data from day ' datestr(fromepoch(epochTime), 'yyyy-mm-dd')]);
+                nodata_log = [nodata_log; epochTime];
                 if exist(NODATA_LOG_FILE, 'file') == 2
                     nodata = load([apppath, 'cnt_cur/nodata_log.dat']);
                     
                     % If nodata_log does NOT contain the day, then add the day to the file.
-                    if isempty(find(time == nodata, 1))
+                    if isempty(find(epochTime == nodata, 1))
                         fid3 = fopen(NODATA_LOG_FILE, 'a');
-                        fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', fromepoch(time));
+                        fprintf(fid3, '%4d %02d %02d %02d %02d %07.4f\n', fromepoch(epochTime));
                         fclose(fid3);
                     end
                 else
                     % If file does not exist, create
                     fid3 = fopen(NODATA_LOG_FILE, 'w');
-                    fprintf(fid3, '%4g %02g %02g %02g %02g %07.4f\n', fromepoch(time));
+                    fprintf(fid3, '%4d %02d %02d %02d %02d %07.4f\n', fromepoch(epochTime));
                     fclose(fid3);
                 end
                 
-                time = time + 86400;   % On to the next day   % NOTE: Does not consider leap seconds.
+                epochTime = epochTime + 86400;   % On to the next day   % NOTE: Does not consider leap seconds.
                 continue;
             else
                 %=====================
@@ -176,14 +183,14 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
                 
                 %dlmwrite(filename, [fromepoch(t_Ne) U_DAC Ne_I], 'delimiter', '\t', 'precision', 6);
                 filesize = dir(filename);
-                filesize = filesize.bytes/1024/1024;
+                filesize = filesize.bytes / (1024*1024);
                 disp(['Done. File size: ', num2str(filesize), ' MiB']);
             end
             
         end   % if(CA.DBH ~= 0)
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        time = time + 86400;   % Continue with next day   % NOTE: Does not consider leap seconds.
+        epochTime = epochTime + 86400;   % Continue with next day   % NOTE: Does not consider leap seconds.
     end
     
     t_work = etime(clock, t_work_start);

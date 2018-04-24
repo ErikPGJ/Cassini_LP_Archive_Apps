@@ -61,7 +61,8 @@ if nargin<1
 %             CA.DURATION(CA.DURATION > 7200) = [];
 %         end
 %     end
-    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');    
+    %[CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');    
+    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'non-interactive; permit long durations');    
 
 end
 if nargin<2
@@ -96,7 +97,8 @@ if isempty(CA.CONTENTS) || isempty(CA.DURATION)
 %             CA.DURATION(CA.DURATION > 7200) = [];
 %         end
 %     end
-    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');
+    %[CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'interactive');
+    [CA.CONTENTS, CA.DURATION] = check_DURATION(CA.CONTENTS, CA.DURATION, 'non-interactive; permit long durations');
 end
 
 
@@ -317,8 +319,10 @@ if (start_entry <= end_entry)
             % generating variable name "spikelog_YYYYDOY" and saving it in a .mat log
             logvar = genvarname(sprintf('spikelog_%4d%03d', timelog(1), date2doy(timelog(1:3))));
             eval([logvar '= spikelog;']);
+ 
             if exist([datapath, 'Cnt_CurDat/spikelog.mat'], 'file') == 2
                 save([datapath, 'Cnt_CurDat/spikelog.mat'], logvar, '-append');
+	    elseif isempty(datapath), disp('no spikelog')  
             else
                 save([datapath, 'Cnt_CurDat/spikelog.mat'], logvar);
             end

@@ -131,14 +131,16 @@ spikelog_I = [];
 
 % tic;
 
+% Iterate over ISDAT time intervals.
 for ii = block(1):block(end)
     
     t_start = toepoch(CONTENTS(ii,:));
     dt = DURATION(ii);
-    % Isdat time tag is not updated correctly sometimes.
-    %if dt<(3600-2) dt = 3600-0.01; end
-    
+
     try
+        %if dt == 260
+        %     q=2;    % DEBUG
+        %end
         [U_time,bias]    = ...
             isGetDataLite(DBH,t_start,dt,'Cassini','','lp','sphp','bias', '','' );
         [I_time,current] = ...
@@ -152,7 +154,7 @@ for ii = block(1):block(end)
     end
 
     if isempty(U_time), continue; end
-    % == =Make sure there is an unique time with ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==
+    % == =Make sure there is a unique time with ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==
     % == =a unique current and bias value. ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==
     % ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  ==  == =
     
@@ -253,7 +255,7 @@ end
 
 
 
-et = find(diff(time_out)>1); st = [1;et+1]; et = [et;length(time_out)]; % sets up indesexes for start/end times for each sweep
+et = find(diff(time_out)>1); st = [1;et+1]; et = [et;length(time_out)]; % sets up indexes for start/end times for each sweep
 if length(time) == 1
     pt = find(abs(time_out(st)-time) == min(abs(time_out(st)-time)));
     t_int = [st(pt):et(pt)];

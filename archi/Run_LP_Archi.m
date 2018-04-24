@@ -28,8 +28,10 @@ function Run_LP_Archi(varargin)
     datapath = '../../Cassini_LP_DATA_Archive/';
     apppath  = '../../Cassini_LP_Archive_Apps/';
     
-    % Measured speed from generating 2015-91 to 2015-181.
-    ESTIMATED_WALL_TIME_PER_DATA_TIME = 8.4/86400;   % Used for predicting (and displaying) the wall time used by the function.   % NOTE: Does not consider leap seconds.
+    % Used for predicting (and displaying) the wall time used by the function.
+    % Measured execution speed from generating 2015-91 to 2015-181.
+    % NOTE: Does not consider leap seconds.
+    ESTIMATED_WALL_TIME_PER_DATA_TIME = 8.4/86400;   
     %NODATA_LOG_FILE = fullfile(apppath, 'cnt_cur', 'nodata_log.dat');
     %DATA_FILE_PATH_PATTERN = fullfile(datapath, 'Cnt_CurDat', 'LP_CntCur_%4d%03d.dat');
     NODATA_LOG_FILE        = fullfile(apppath, 'archi', 'nodata_log.dat');
