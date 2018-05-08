@@ -29,7 +29,6 @@
 % Based on Process.m by Jan-Erik Wahlund (original in the ../cnt_cur_draft folder)
 % Oleg Shebanits, 2012-02
 %
-%function [t_Ne U_DAC Ne_I] = Read_Density(CA, start_time, end_time)
 function [t_Ne U_DAC Ne_I TM_values] = Read_Density(CA, start_time, end_time)
 %
 % PROPOSAL: Merge two identical occurrences of ~isempty(CA.DURATION(CA.DURATION > 7200))...end into separate function.
@@ -194,6 +193,10 @@ if (start_entry <= end_entry)
         return;
     end
     
+    ind = find(diff(t)<0);
+    if ~isempty(ind) 
+        t = t(1:ind); Ne_TM = Ne_TM(1:ind); I = I(1:ind);
+    end
     %clear Ne_TM_tmp I_tmp DAC_tmp U_tmp t_tmp t_DAC_tmp
     
     %==================================================================================================
@@ -228,6 +231,8 @@ if (start_entry <= end_entry)
         t_DAC = t_DAC_new;
     end
 
+
+    % KOKO
     TM_values.DAC_U = U;
     TM_values.t_DAC = t_DAC;
     TM_values.DAC_TM = DAC;
@@ -279,45 +284,48 @@ if (start_entry <= end_entry)
     % Only the "beginning" of a time interval has a DAC,
     % need to fill out a DAC for each I value!
     [c int_e ~] = intersect(t, t_DAC);
-    disp([length(c) length(t_DAC)])
-    if ~isempty(c)
 
-	% DAC/Current blocks are not one to one sometimes (especially finale orbits)
-	if length(c) ~= length(t_DAC)
+    disp([length(c) length(t_DAC)]) 
+
+    if ~isempty(c)
+        
+    	if length(c) ~= length(t_DAC)
            int_s = []; int_e = [];
-           for ii=1:length(t_DAC)-1
-               ind = find(t>=t_DAC(ii));   int_s = [int_s   ind(1) ];
-               ind = find(t< t_DAC(ii+1)); int_e = [int_e   ind(end) ];
-           end
-           ind = find(t>=t_DAC(end));
-           if ~isempty(ind)
-                int_s = [int_s   ind(1) ];
-                int_e = [int_e length(t)];
-           end
-        else
+	   for ii=1:length(t_DAC)-1
+	       ind = find(t>=t_DAC(ii)); 
+		if isempty(ind), continue, end
+                                           int_s = [int_s   ind(1) ];
+	       ind = find(t< t_DAC(ii+1)); int_e = [int_e   ind(end) ];
+	   end
+	   ind = find(t>=t_DAC(end));
+	   if ~isempty(ind)
+		int_s = [int_s   ind(1) ];
+	   	int_e = [int_e length(t)];
+	   end
+	else
            int_s = int_e;
            int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
         end
-
+        
         DAC_temp = NaN*ones(length(I),1); % pre-allocating for speed and convenience
         for k = 1:length(c)
             DAC_temp(int_s(k):int_e(k)-1) = U(k);
         end
-
-	%----- The current without 20Hz filter seems to be flipping the sign
+%keyboard
 	dt = diff([t(int_s) t(int_s+1)],1,2);
-        Iflp_blk = find(dt>0.90);
-  	%keyboard
-        p_Iflp = [];
-        for ii=1:length(Iflp_blk)
-            p_Iflp = [p_Iflp int_s(Iflp_blk(ii)):int_e(Iflp_blk(ii))];
-        end
-        I(p_Iflp) = -I(p_Iflp);
+	Iflp_blk = find(dt>0.05);
+	p_Iflp = [];
+	for ii=1:length(Iflp_blk)
+	    p_Iflp = [p_Iflp int_s(ii):int_e(ii)];
+	end
+	I(p_Iflp) = -I(p_Iflp);
+        
         
         I(1:int_s(1)-1) = []; % remove values of I before U is set
         DAC_temp(1:int_s(1)-1) = [];
         t(1:int_s(1)-1) = [];
         U = DAC_temp;
+
         % t_DAC = t;
         % clear DAC_temp c int_e
         %     t_Ne = t;
@@ -348,10 +356,8 @@ if (start_entry <= end_entry)
             % generating variable name "spikelog_YYYYDOY" and saving it in a .mat log
             logvar = genvarname(sprintf('spikelog_%4d%03d', timelog(1), date2doy(timelog(1:3))));
             eval([logvar '= spikelog;']);
- 
             if exist([datapath, 'Cnt_CurDat/spikelog.mat'], 'file') == 2
                 save([datapath, 'Cnt_CurDat/spikelog.mat'], logvar, '-append');
-	    elseif isempty(datapath), disp('no spikelog')  
             else
                 save([datapath, 'Cnt_CurDat/spikelog.mat'], logvar);
             end
