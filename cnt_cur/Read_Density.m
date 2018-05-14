@@ -193,45 +193,66 @@ if (start_entry <= end_entry)
         return;
     end
     
-    ind = find(diff(t)<0);
-    if ~isempty(ind) 
-        t = t(1:ind); Ne_TM = Ne_TM(1:ind); I = I(1:ind);
-    end
     %clear Ne_TM_tmp I_tmp DAC_tmp U_tmp t_tmp t_DAC_tmp
     
+
+
+    %=================================================================================
+    % Modify sequence of measured samples in case the time array is not incrementing.
+    %=================================================================================
+    % Remove data starting at first timestamp "t" (not "t_DAC") that represents a time earlier than the previous timestamp "t".
+    % QUESTION to MM: Does this not remove to much data?
+    ind = find(diff(t)<0);    % Find indices for time stamps followed by time stamps earlier in time (i.e. NOT increasing).
+    if ~isempty(ind) 
+        t = t(1:ind); Ne_TM = Ne_TM(1:ind); I = I(1:ind);   % De facto only uses ind(1).
+    end
+    % Remove timestamps to produce a sequence of monotonically incrementing timestamps.
+    %iKeep = keep_incrementing_values(t);
+    %t     = t(iKeep);
+    %Ne_TM = Ne_TM(iKeep);
+    %I     = I(iKeep);
+    
+    
+    
     %==================================================================================================
-    % Take precautions if t_DAC is not sorted
+    % Take precautions if t_DAC is not sorted.
     % ONLY for U, DAC, t_DAC: Only keep data points for which t_DAC is larger than the preceeding one.
     %==================================================================================================
-    if ~issorted(t_DAC)
-        % The DAC values are sometimes weird!
-        ind       = find( diff(t_DAC) > 0 );    % Find indices for which t_DAC increase.
-        t_DAC_new = zeros(length(t_DAC)-length(ind),1);
-        DAC_new   = zeros(length(t_DAC)-length(ind),1);
-        U_new     = zeros(length(t_DAC)-length(ind),1);
-        
-        k = 1;
-        t_DAC_new(1) = t_DAC(1);
-        DAC_new(1)   = DAC(1);
-        U_new(1)     = U(1);
-        k = k+1;
-        for j = 2:length(t_DAC)
-            if t_DAC(j) < t_DAC(j-1)   % Skip it!
-            else % include
-                t_DAC_new(k) = t_DAC(j);
-                DAC_new(k)   = DAC(j);
-                U_new(k)     = U(j);
-                k = k+1;
-            end
-        end
-        
-        % clear t_DAC DAC U
-        U     = U_new;
-        DAC   = DAC_new;
-        t_DAC = t_DAC_new;
-    end
+%     if ~issorted(t_DAC)
+%         % The DAC values are sometimes weird!
+%         ind       = find( diff(t_DAC) > 0 );    % Find indices for which t_DAC increase.
+%         t_DAC_new = zeros(length(t_DAC)-length(ind),1);
+%         DAC_new   = zeros(length(t_DAC)-length(ind),1);
+%         U_new     = zeros(length(t_DAC)-length(ind),1);
+%         
+%         k = 1;
+%         t_DAC_new(1) = t_DAC(1);
+%         DAC_new(1)   = DAC(1);
+%         U_new(1)     = U(1);
+%         k = k+1;
+%         for j = 2:length(t_DAC)
+%             if t_DAC(j) < t_DAC(j-1)   % Skip it!
+%             else % include
+%                 t_DAC_new(k) = t_DAC(j);
+%                 DAC_new(k)   = DAC(j);
+%                 U_new(k)     = U(j);
+%                 k = k+1;
+%             end
+%         end
+%         
+%         % clear t_DAC DAC U
+%         U     = U_new;
+%         DAC   = DAC_new;
+%         t_DAC = t_DAC_new;
+%     end
+    % Code that replaces the above with essentially identical functionality.
+    iKeep = keep_incrementing_values(t_DAC);
+    t_DAC = t_DAC(iKeep);
+    DAC   = DAC(iKeep);
+    U     = U(iKeep);
 
-
+    
+    
     % KOKO
     TM_values.DAC_U = U;
     TM_values.t_DAC = t_DAC;
@@ -271,61 +292,81 @@ if (start_entry <= end_entry)
     %Plot_Cal;
     %end
     
-    %=============================================================
-    % For any double-values of t_DAC : Remove U and t_DAC values.
-    %=============================================================
+    %===================================================================================================
+    % For any double-values of t_DAC : Remove U and t_DAC values for the first doubled value.
+    % ---------------------------------------------------------------------------------------
+    % NOTE: Unnecessary since already removing DAC/bias samples to obtain monotonically increasing time series?
+    %===================================================================================================
     if ~isempty(diff(t_DAC) == 0)
-        U(diff(t_DAC) == 0) = []; % this one first
+        U(    diff(t_DAC) == 0) = []; % this one first
         t_DAC(diff(t_DAC) == 0) = [];
     end
     
     
     
     % Only the "beginning" of a time interval has a DAC,
-    % need to fill out a DAC for each I value!
-    [c int_e ~] = intersect(t, t_DAC);
-
-    disp([length(c) length(t_DAC)]) 
+    % need to fill out a DAC for each "I" value!
+    [c int_e ~] = intersect(t, t_DAC);    % NOTE: c == t(int_e)
+    
+    disp([length(c) length(t_DAC)])
 
     if ~isempty(c)
-        
-    	if length(c) ~= length(t_DAC)
-           int_s = []; int_e = [];
-	   for ii=1:length(t_DAC)-1
-	       ind = find(t>=t_DAC(ii)); 
-		if isempty(ind), continue, end
-                                           int_s = [int_s   ind(1) ];
-	       ind = find(t< t_DAC(ii+1)); int_e = [int_e   ind(end) ];
-	   end
-	   ind = find(t>=t_DAC(end));
-	   if ~isempty(ind)
-		int_s = [int_s   ind(1) ];
-	   	int_e = [int_e length(t)];
-	   end
-	else
-           int_s = int_e;
-           int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
+
+        if length(c) ~= length(t_DAC)
+            int_s = []; int_e = [];
+            for ii=1:length(t_DAC)-1
+                ind = find(t>=t_DAC(ii));
+                if isempty(ind), continue, end
+
+                ind1 = ind(1);     % NOTE: Must have checked if "ind" is empty first.
+                ind = find(t< t_DAC(ii+1));
+                ind2 = ind(end);
+                
+                % ind1 = Index to first t value AFTER-OR-EQUAL-TO t_DAC(ii):
+                % ind2 = Index to first t value BEFORE            t_DAC(ii+1):
+                % QUESTION to MM: Call "continue" if ind2 > ind1 ? (Does happen for 2008-168).
+                %if (ind1 > ind2), continue end
+                
+                int_s = [int_s   ind1 ];
+                int_e = [int_e   ind2 ];
+                
+                % TEST ASSERTION
+                %if ind1 > ind2
+                %    error('ERROR')
+                %end
+            end
+            ind = find(t>=t_DAC(end));
+            if ~isempty(ind)
+                int_s = [int_s   ind(1) ];
+                int_e = [int_e length(t)];
+            end
+        else
+            int_s = int_e;
+            int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
         end
         
         DAC_temp = NaN*ones(length(I),1); % pre-allocating for speed and convenience
         for k = 1:length(c)
             DAC_temp(int_s(k):int_e(k)-1) = U(k);
         end
-%keyboard
-	dt = diff([t(int_s) t(int_s+1)],1,2);
-	Iflp_blk = find(dt>0.05);
-	p_Iflp = [];
-	for ii=1:length(Iflp_blk)
-	    p_Iflp = [p_Iflp int_s(ii):int_e(ii)];
-	end
-	I(p_Iflp) = -I(p_Iflp);
+        %keyboard
+        %dt = diff([t(int_s) t(min(int_s+1, length(t)))],1,2);     % EJ: Experimental bugfix.
+        %dt = diff([t(int_s) t(int_e)],1,2);                       % EJ: Experimental bugfix.
+        %dt = diff([t(int_s(1:end-1)) t(int_s(1:end-1)+1)],1,2);     % EJ: Experimental bugfix.
+        dt = diff([t(int_s) t(int_s+1)],1,2);    % Use "diff" in the 2nd dimension/index to find difference between two columns.
+        Iflp_blk = find(dt>0.05);     % QUESTION to MM: Does 0.05 refer to 1/0.05=20 Hz?
+        p_Iflp = [];   % List of indices for which the sign of "I" should be flipped.
+        for ii=1:length(Iflp_blk)
+            p_Iflp = [p_Iflp int_s(ii):int_e(ii)];
+        end
+        I(p_Iflp) = -I(p_Iflp);
         
         
         I(1:int_s(1)-1) = []; % remove values of I before U is set
         DAC_temp(1:int_s(1)-1) = [];
         t(1:int_s(1)-1) = [];
         U = DAC_temp;
-
+        
         % t_DAC = t;
         % clear DAC_temp c int_e
         %     t_Ne = t;
@@ -397,6 +438,6 @@ else
     Ne_I = I;
 end
 
-return;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
