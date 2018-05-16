@@ -195,7 +195,8 @@ if (start_entry <= end_entry)
     
     ind = find(diff(t)<0);
     if ~isempty(ind) 
-        t = t(1:ind); Ne_TM = Ne_TM(1:ind); I = I(1:ind);
+       % t = t(1:ind); Ne_TM = Ne_TM(1:ind); I = I(1:ind);
+         t(ind+1) = NaN; Ne_TM(ind+1) = NaN; I(ind+1) = NaN;
     end
     %clear Ne_TM_tmp I_tmp DAC_tmp U_tmp t_tmp t_DAC_tmp
     
@@ -311,16 +312,17 @@ if (start_entry <= end_entry)
         for k = 1:length(c)
             DAC_temp(int_s(k):int_e(k)-1) = U(k);
         end
-% keyboard
+
 	if int_s(end) == length(t)
 	   dt = diff([t(int_s(1:end-1)) t(int_s(1:end-1)+1)],1,2);
 	else
 	   dt = diff([t(int_s) t(int_s+1)],1,2);
 	end
 	Iflp_blk = find(dt>0.05);
+
 	p_Iflp = [];
 	for ii=1:length(Iflp_blk)
-	    p_Iflp = [p_Iflp int_s(ii):int_e(ii)];
+            p_Iflp = [p_Iflp int_s(Iflp_blk(ii)):int_e(Iflp_blk(ii))];
 	end
 	I(p_Iflp) = -I(p_Iflp);
         
