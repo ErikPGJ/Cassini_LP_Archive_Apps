@@ -318,7 +318,7 @@ if (start_entry <= end_entry)
 	else
 	   dt = diff([t(int_s) t(int_s+1)],1,2);
 	end
-	Iflp_blk = find(dt>0.05);
+	Iflp_blk = find(dt>0.025);
 
 	p_Iflp = [];
 	for ii=1:length(Iflp_blk)

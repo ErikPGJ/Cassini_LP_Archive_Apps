@@ -1,5 +1,12 @@
 function DBH_test2(CA,tint)
 
+
+	if length(tint(:,1)) == 1
+	   tint = [tint(1:3) 0 0 0];
+	   tint = [ toepoch(tint)-3600*24*1,  toepoch(tint)+3600*24*3 ];
+	   tint = fromepoch(tint);
+	end
+
 	if diff(toepoch(tint))>24*3600
 
 	   tint = toepoch(tint); tint_end = tint(2);
@@ -19,12 +26,12 @@ function DBH_test2(CA,tint)
 	    [t_Ne U_DAC Ne_I TM_val] = Read_Density(CA,fromepoch(tint(ii)),fromepoch(tint(ii+1)));
 
             subplot(pn,1,1)
-            plot(t_Ne,Ne_I*1e9,'b.')
-	    %ind_neg = find(Ne_I<0);
-	    %if  ~isempty(ind_neg)
-    	        %hold on
-	        %plot(t_Ne(ind_neg),abs(Ne_I(ind_neg)),'r.')
-	    %end
+            plot(t_Ne,Ne_I,'b.')
+	    ind_neg = find(Ne_I<0);
+	    if  ~isempty(ind_neg)
+    	        hold on
+	        plot(t_Ne(ind_neg),abs(Ne_I(ind_neg)),'r.')
+	    end
 	    if first
 	       hold on
                time = fromepoch(t_Ne(1));
@@ -34,8 +41,7 @@ function DBH_test2(CA,tint)
 	    end
 	    limx(2) = t_Ne(end);
             xlim(limx), epochtick
-	    ylim([-50 50])
-	    %set(gca,'YScale','log')
+	    set(gca,'YScale','log')
     
             subplot(pn,1,2)
             plot(t_Ne,U_DAC,'b.')
