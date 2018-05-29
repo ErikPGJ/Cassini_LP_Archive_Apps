@@ -1,4 +1,3 @@
-%
 % LP Continuous Current extraction and archiving for Cassini
 % NOTE: Writes Cnt_CurDat/spikelog.mat (creates or appends) via "Read_Density".
 %
@@ -13,6 +12,7 @@
 % =========
 % t_start_incl : Start date, inclusive.
 % t_end_excl   : Stop date, exclusive.
+% NOTE: Time format is an array [year doy].
 %
 %
 % NOTE: Can not called from any directory.
@@ -81,9 +81,9 @@ if(strcmp(Analyse,'Cassini')) % Do cassini analysis ?
 
     timeVecBeginIncl = interpret_user_input_day(modifTimeVectorBeginIncl);
     timeVecEndExcl   = interpret_user_input_day(modifTimeVectorEndExcl);
-    epochBeginIncl   = toepoch(timeVecBeginIncl);
+    epochBeginIncl   = toepoch(timeVecBeginIncl);    % "epoch" = seconds since time X.
     epochEndExcl     = toepoch(timeVecEndExcl);    
-    N_days = (epochEndExcl - epochBeginIncl) / 86400;   % NOTE: Does not consider leap seconds.
+    N_days = (epochEndExcl - epochBeginIncl) / 86400;    % NOTE: Does not consider leap seconds.
 
 
 

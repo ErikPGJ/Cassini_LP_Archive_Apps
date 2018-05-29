@@ -285,44 +285,44 @@ if (start_entry <= end_entry)
     % Only the "beginning" of a time interval has a DAC,
     % need to fill out a DAC for each I value!
     [c int_e ~] = intersect(t, t_DAC);
-
-    disp([length(c) length(t_DAC)]) 
-
+    
+    disp([length(c) length(t_DAC)])
+    
     if ~isempty(c)
         
-    	if length(c) ~= length(t_DAC)
-           int_s = []; int_e = [];
-	   for ii=1:length(t_DAC)-1
-	       ind = find(t< t_DAC(ii+1));
-	       if isempty(ind), continue, end
-               int_e = [int_e   ind(end) ];
-
-	       ind = find(t>=t_DAC(ii)); 
-	       if isempty(ind), continue, end
-               int_s = [int_s   ind(1) ];
-
-	   end
-	   ind = find(t>=t_DAC(end));
-	   if ~isempty(ind)
-		int_s = [int_s   ind(1) ];
-	   	int_e = [int_e length(t)];
-	   end
-	else
-           int_s = int_e;
-           int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
+        if length(c) ~= length(t_DAC)
+            int_s = []; int_e = [];
+            for ii=1:length(t_DAC)-1
+                ind = find(t< t_DAC(ii+1));
+                if isempty(ind), continue, end
+                int_e = [int_e   ind(end) ];
+                
+                ind = find(t>=t_DAC(ii));
+                if isempty(ind), continue, end
+                int_s = [int_s   ind(1) ];
+                
+            end
+            ind = find(t>=t_DAC(end));
+            if ~isempty(ind)
+                int_s = [int_s   ind(1) ];
+                int_e = [int_e length(t)];
+            end
+        else
+            int_s = int_e;
+            int_e = [int_e(2:end); length(t)]; % the last value should be the end of the current array
         end
         
         DAC_temp = NaN*ones(length(I),1); % pre-allocating for speed and convenience
         for k = 1:length(c)
             DAC_temp(int_s(k):int_e(k)-1) = U(k);
         end
-
-	if int_s(end) == length(t)
-	   dt = diff([t(int_s(1:end-1)) t(int_s(1:end-1)+1)],1,2);
-	else
-	   dt = diff([t(int_s) t(int_s+1)],1,2);
-	end
-	Iflp_blk = find(dt>0.025);
+        
+        if int_s(end) == length(t)
+            dt = diff([t(int_s(1:end-1)) t(int_s(1:end-1)+1)],1,2);
+        else
+            dt = diff([t(int_s) t(int_s+1)],1,2);
+        end
+        Iflp_blk = find(dt>0.025);
 
 	p_Iflp = [];
 	for ii=1:length(Iflp_blk)

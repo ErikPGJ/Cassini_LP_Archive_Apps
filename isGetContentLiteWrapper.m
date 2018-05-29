@@ -70,7 +70,7 @@ function [start, dur] = isGetContentLiteWrapper( varargin )
     
     
     % Deal with ISDAT bug which causes calls for ISDAT data to fail for certain longer time
-    % intervals (possiblyall time intervals which include certain samples).
+    % intervals (possibly all time intervals which include certain samples).
     % 
     % NOTE: Does not check for the "seconds" value.
     [start, dur] = split_ISDAT_interval_2(start, dur, [2016, 12, 11, 20, 0], 60);
