@@ -293,10 +293,14 @@ if (start_entry <= end_entry)
     	if length(c) ~= length(t_DAC)
            int_s = []; int_e = [];
 	   for ii=1:length(t_DAC)-1
+	       ind = find(t< t_DAC(ii+1));
+	       if isempty(ind), continue, end
+               int_e = [int_e   ind(end) ];
+
 	       ind = find(t>=t_DAC(ii)); 
-		if isempty(ind), continue, end
-                                           int_s = [int_s   ind(1) ];
-	       ind = find(t< t_DAC(ii+1)); int_e = [int_e   ind(end) ];
+	       if isempty(ind), continue, end
+               int_s = [int_s   ind(1) ];
+
 	   end
 	   ind = find(t>=t_DAC(end));
 	   if ~isempty(ind)
