@@ -1,10 +1,11 @@
 %
-% Function for removing array values to make it easy to create an array of monotonically increasing values.
+% Function for removing array values to make it easy to create an array of
+% monotonically increasing values.
 %
 % This function is mostly intended to (maybe) replace code in Read_Density.m.
 % The (old) implementation of Read_density.m that does not use this function
-% (1) removes timestamps that decrease compared to the immediately preceeding timestamp, i.e. do not guarantee a
-% non-monotonic time series in the end, and
+% (1) removes timestamps that decrease compared to the immediately preceeding
+% timestamp, i.e. do not guarantee a non-monotonic time series in the end, and
 % (2) sets non-incrementing MEASURED values to NaN (kees the indices),
 % but removes non-incrementing DAC values (removes the indices).
 % This function's return result can be used to achieve both types of handling.
@@ -14,14 +15,18 @@
 %
 % ARGUMENTS AND RETURN VALUES
 % ============================
-% tArray : 1D array of logical.
-% iKeep  : Logical array same size as tArray. True for indices where tArray values are (strictly) higher than all previous values.
-%          Empty tArray is represented by size 1x0 array.
+% tArray
+%       1D array of logical.
+% iKeep
+%       Logical array of the same size as tArray. True for indices where tArray
+%       values are (strictly) higher than all previous values. Empty tArray is
+%       represented by size 1x0 array.
 %
 %
-% Created 2018-05-14 by Erik P G Johansson.
+% Created 2018-05-14 by Erik P G Johansson, IRF Uppsala.
 %
 function iKeep = keep_incrementing_values(tArray)
+    % PROPOSAL: Delete file
 
     % ASSERTION
     %if ~isvector(tArray)    % NOTE: isvector([]) == false; isvector(zeros(1,0)) == true
